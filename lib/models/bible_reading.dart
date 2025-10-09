@@ -1,0 +1,65 @@
+class BibleReading {
+  final String date;
+  final String book;
+  final String bookEng;
+  final int startChapter;
+  final int endChapter;
+  final String fullName;
+  final String fullNameEng;
+
+  BibleReading({
+    required this.date,
+    required this.book,
+    required this.bookEng,
+    required this.startChapter,
+    required this.endChapter,
+    required this.fullName,
+    required this.fullNameEng,
+  });
+
+  factory BibleReading.fromMap(Map<String, dynamic> map) {
+    return BibleReading(
+      date: map['Date'].toString(),
+      book: map['Book'] as String,
+      bookEng: map['Book(ENG)'] as String,
+      startChapter: map['Start Chapter'] as int,
+      endChapter: map['End Chapter'] as int,
+      fullName: map['Full Name'] as String,
+      fullNameEng: map['Full Name(ENG)'] as String,
+    );
+  }
+}
+
+class Verse {
+  final String book;
+  final int chapter;
+  final int verseNumber;
+  final String text;
+
+  Verse({
+    required this.book,
+    required this.chapter,
+    required this.verseNumber,
+    required this.text,
+  });
+
+  String get key => '$book-$chapter-$verseNumber';
+}
+
+class SelectedVerse {
+  final String book;
+  final String fullName;
+  final int chapter;
+  final int verseNumber;
+  final String text;
+
+  SelectedVerse({
+    required this.book,
+    required this.fullName,
+    required this.chapter,
+    required this.verseNumber,
+    required this.text,
+  });
+
+  String get key => '$book-$chapter-$verseNumber';
+}
