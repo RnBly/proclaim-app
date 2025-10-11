@@ -253,6 +253,14 @@ class BibleService {
       });
     }
 
+    // 장 번호 먼저, 그 다음 절 번호로 정렬
+    verses.sort((a, b) {
+      if (a.chapter != b.chapter) {
+        return a.chapter.compareTo(b.chapter);
+      }
+      return a.verseNumber.compareTo(b.verseNumber);
+    });
+
     return verses;
   }
 
@@ -309,6 +317,9 @@ class BibleService {
         }
       });
     }
+
+    // 절 번호로 정렬
+    verses.sort((a, b) => a.verseNumber.compareTo(b.verseNumber));
 
     return verses;
   }
