@@ -55,14 +55,16 @@ class BibleService {
   Future<void> _downloadFile(String url, String savePath) async {
     final file = File(savePath);
 
-    // 24시간 이내 파일이 있으면 건너뛰기
-    if (await file.exists()) {
-      final lastModified = await file.lastModified();
-      if (DateTime.now().difference(lastModified).inHours < 24) {
-        print('Using cached file: $savePath');
-        return;
-      }
+    // 이 부분을 주석 처리 (항상 다운로드)
+    /*
+  if (await file.exists()) {
+    final lastModified = await file.lastModified();
+    if (DateTime.now().difference(lastModified).inHours < 24) {
+      print('Using cached file: $savePath');
+      return;
     }
+  }
+  */
 
     print('Downloading: $url');
     final response = await http.get(Uri.parse(url));
