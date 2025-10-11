@@ -4,6 +4,8 @@ import '../services/bible_service.dart';
 import '../models/bible_reading.dart';
 import '../widgets/bible_page.dart';
 import '../widgets/date_picker_dialog.dart' as custom;
+import '../widgets/translation_dialog.dart';
+import '../widgets/copy_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,7 +17,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  DateTime _selectedDate = DateTime.now();  // 이 줄이 있어야 합니다!
+  DateTime _selectedDate = DateTime.now();
+  Translation _currentTranslation = Translation.korean;
   final Map<String, Set<String>> _selectedVerses = {
     'old': {},
     'psalms': {},
@@ -47,6 +50,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Row(
               children: [
+                IconButton(
+                  icon: const Icon(Icons.translate, color: Colors.black87),
+                  onPressed: _showTranslationDialog,
+                ),
                 IconButton(
                   icon: Icon(
                     Icons.arrow_back_ios,
@@ -91,18 +98,21 @@ class _HomeScreenState extends State<HomeScreen> {
           BiblePage(
             sheetType: 'old',
             selectedDate: _selectedDate,
+            translation: _currentTranslation,
             selectedVerses: _selectedVerses['old']!,
             onVerseToggle: (key) => _toggleVerse('old', key),
           ),
           BiblePage(
             sheetType: 'psalms',
             selectedDate: _selectedDate,
+            translation: _currentTranslation,
             selectedVerses: _selectedVerses['psalms']!,
             onVerseToggle: (key) => _toggleVerse('psalms', key),
           ),
           BiblePage(
             sheetType: 'new',
             selectedDate: _selectedDate,
+            translation: _currentTranslation,
             selectedVerses: _selectedVerses['new']!,
             onVerseToggle: (key) => _toggleVerse('new', key),
           ),
@@ -126,7 +136,23 @@ class _HomeScreenState extends State<HomeScreen> {
         onDateSelected: (date) {
           setState(() {
             _selectedDate = date;
-            // 날짜 변경 시 선택된 절 초기화
+            _selectedVerses['old']!.clear();
+            _selectedVerses['psalms']!.clear();
+            _selectedVerses['new']!.clear();
+          });
+        },
+      ),
+    );
+  }
+
+  void _showTranslationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => TranslationDialog(
+        currentTranslation: _currentTranslation,
+        onTranslationChanged: (translation) {
+          setState(() {
+            _currentTranslation = translation;
             _selectedVerses['old']!.clear();
             _selectedVerses['psalms']!.clear();
             _selectedVerses['new']!.clear();
@@ -151,6 +177,43 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _copySelectedVerses() async {
+    // 복사 형식 선택 다이얼로그 표시
+    showDialog(
+      context: context,
+      builder: (context) => CopyDialog(
+        onFormatSelected: (format) async {
+          String formatted = '';
+
+          if (format == CopyFormat.korean) {
+            formatted = await _getKoreanFormat();
+          } else if (format == CopyFormat.esv) {
+            formatted = await _getEsvFormat();
+          } else {
+            formatted = await _getCompareFormat();
+          }
+
+          await Clipboard.setData(ClipboardData(text: formatted));
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('복사 되었습니다'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+
+            setState(() {
+              _selectedVerses['old']!.clear();
+              _selectedVerses['psalms']!.clear();
+              _selectedVerses['new']!.clear();
+            });
+          }
+        },
+      ),
+    );
+  }
+
+  Future<String> _getKoreanFormat() async {
     final List<SelectedVerse> allSelected = [];
 
     for (var sheetType in ['old', 'psalms', 'new']) {
@@ -176,24 +239,93 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    final formatted = BibleService().formatSelectedVerses(allSelected);
+    return BibleService().formatSelectedVerses(allSelected);
+  }
 
-    await Clipboard.setData(ClipboardData(text: formatted));
+  Future<String> _getEsvFormat() async {
+    final List<SelectedVerseEsv> allSelected = [];
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('복사 되었습니다'),
-          duration: Duration(seconds: 2),
-        ),
+    for (var sheetType in ['old', 'psalms', 'new']) {
+      final reading = BibleService().getReadingForDate(_selectedDate, sheetType);
+      if (reading == null) continue;
+
+      // 한글 구절과 ESV 구절 모두 가져오기
+      final koreanVerses = BibleService().getVerses(
+        reading.book,
+        reading.startChapter,
+        reading.endChapter,
       );
 
-      setState(() {
-        _selectedVerses['old']!.clear();
-        _selectedVerses['psalms']!.clear();
-        _selectedVerses['new']!.clear();
-      });
+      final esvVerses = BibleService().getEsvVerses(
+        reading.bookEng,
+        reading.startChapter,
+        reading.endChapter,
+      );
+
+      // 한글 key로 선택된 것 확인
+      for (var koreanVerse in koreanVerses) {
+        if (_selectedVerses[sheetType]!.contains(koreanVerse.key)) {
+          // 해당하는 ESV 구절 찾기
+          final esvVerse = esvVerses.firstWhere(
+                (v) => v.chapter == koreanVerse.chapter && v.verseNumber == koreanVerse.verseNumber,
+            orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
+          );
+
+          if (esvVerse.text.isNotEmpty) {
+            allSelected.add(SelectedVerseEsv(
+              bookEng: reading.bookEng,  // 약칭 사용
+              fullNameEng: reading.fullNameEng,
+              chapter: esvVerse.chapter,
+              verseNumber: esvVerse.verseNumber,
+              text: esvVerse.text,
+            ));
+          }
+        }
+      }
     }
+
+    return BibleService().formatSelectedVersesEsv(allSelected);
+  }
+
+  Future<String> _getCompareFormat() async {
+    final List<SelectedVerseCompare> allSelected = [];
+
+    for (var sheetType in ['old', 'psalms', 'new']) {
+      final reading = BibleService().getReadingForDate(_selectedDate, sheetType);
+      if (reading == null) continue;
+
+      final koreanVerses = BibleService().getVerses(
+        reading.book,
+        reading.startChapter,
+        reading.endChapter,
+      );
+
+      final esvVerses = BibleService().getEsvVerses(
+        reading.bookEng,
+        reading.startChapter,
+        reading.endChapter,
+      );
+
+      for (var koreanVerse in koreanVerses) {
+        if (_selectedVerses[sheetType]!.contains(koreanVerse.key)) {
+          final esvVerse = esvVerses.firstWhere(
+                (v) => v.chapter == koreanVerse.chapter && v.verseNumber == koreanVerse.verseNumber,
+            orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
+          );
+
+          allSelected.add(SelectedVerseCompare(
+            book: koreanVerse.book,
+            fullName: reading.fullName,
+            chapter: koreanVerse.chapter,
+            verseNumber: koreanVerse.verseNumber,
+            koreanText: koreanVerse.text,
+            englishText: esvVerse.text,
+          ));
+        }
+      }
+    }
+
+    return BibleService().formatSelectedVersesCompare(allSelected);
   }
 
   @override

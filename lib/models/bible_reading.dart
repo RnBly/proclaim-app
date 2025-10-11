@@ -63,3 +63,41 @@ class SelectedVerse {
 
   String get key => '$book-$chapter-$verseNumber';
 }
+
+class SelectedVerseEsv {
+  final String bookEng;
+  final String fullNameEng;
+  final int chapter;
+  final int verseNumber;
+  final String text;
+
+  SelectedVerseEsv({
+    required this.bookEng,
+    required this.fullNameEng,
+    required this.chapter,
+    required this.verseNumber,
+    required this.text,
+  });
+
+  String get key => '$bookEng-$chapter-$verseNumber';
+}
+
+class SelectedVerseCompare {
+  final String book;
+  final String fullName;
+  final int chapter;
+  final int verseNumber;
+  final String koreanText;
+  final String englishText;
+
+  SelectedVerseCompare({
+    required this.book,
+    required this.fullName,
+    required this.chapter,
+    required this.verseNumber,
+    required this.koreanText,
+    required this.englishText,
+  });
+
+  String get key => '$book-$chapter-$verseNumber';
+}
