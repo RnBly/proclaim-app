@@ -24,6 +24,7 @@ class SettingsDialog extends StatefulWidget {
 class _SettingsDialogState extends State<SettingsDialog> {
   late double _titleFontSize;
   late double _bodyFontSize;
+  late Translation _selectedTranslation;
 
   // 기본값
   static const double DEFAULT_TITLE_SIZE = 20.0;
@@ -40,25 +41,46 @@ class _SettingsDialogState extends State<SettingsDialog> {
     super.initState();
     _titleFontSize = widget.currentTitleFontSize;
     _bodyFontSize = widget.currentBodyFontSize;
+    _selectedTranslation = widget.currentTranslation;
   }
 
   void _resetToDefault() {
     setState(() {
       _titleFontSize = DEFAULT_TITLE_SIZE;
       _bodyFontSize = DEFAULT_BODY_SIZE;
+      _selectedTranslation = Translation.korean;  // 이 줄 추가!
     });
+  }
+
+  String _getTranslationLabel(Translation translation) {
+    switch (translation) {
+      case Translation.korean:
+        return '개역개정';
+      case Translation.esv:
+        return 'ESV';
+      case Translation.compare:
+        return '역본대조';
+    }
   }
 
   void _showTranslationDialog() {
     showDialog(
       context: context,
       builder: (context) => TranslationDialog(
-        currentTranslation: widget.currentTranslation,
+        currentTranslation: _selectedTranslation,
         onTranslationChanged: (translation) {
-          widget.onTranslationChanged(translation);
+          setState(() {
+            _selectedTranslation = translation;
+          });
         },
       ),
     );
+  }
+
+  void _saveSettings() {
+    widget.onTranslationChanged(_selectedTranslation);
+    widget.onFontSizeChanged(_titleFontSize, _bodyFontSize);
+    Navigator.pop(context);
   }
 
   @override
@@ -115,9 +137,12 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      '역본 비교',
-                      style: TextStyle(fontSize: 16),
+                    Text(
+                      _getTranslationLabel(_selectedTranslation),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[600]),
                   ],
@@ -240,10 +265,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  widget.onFontSizeChanged(_titleFontSize, _bodyFontSize);
-                  Navigator.pop(context);
-                },
+                onPressed: _saveSettings,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   padding: const EdgeInsets.symmetric(vertical: 16),
