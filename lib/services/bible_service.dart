@@ -163,6 +163,7 @@ class BibleService {
           'End Chapter': int.tryParse(row[4]?.value.toString() ?? '0') ?? 0,
           'Full Name': row[5]?.value.toString() ?? '',
           'Full Name(ENG)': row[6]?.value.toString() ?? '',
+          'Verse': row[7]?.value.toString(),  // ← 이 줄이 있어야 함!
         };
         readings.add(BibleReading.fromMap(map));
       } catch (e) {
@@ -201,6 +202,8 @@ class BibleService {
   }
 
   List<Verse> getVerses(String book, int startChapter, int endChapter, {String? verseRange}) {
+    print('getVerses called: book=$book, chapters=$startChapter-$endChapter, verseRange=$verseRange'); // ← 추가!
+
     final List<Verse> verses = [];
 
     if (_bibleData == null || _bibleData![book] == null) return verses;
