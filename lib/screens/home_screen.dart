@@ -6,6 +6,7 @@ import '../widgets/bible_page.dart';
 import '../widgets/date_picker_dialog.dart' as custom;
 import '../widgets/translation_dialog.dart';
 import '../widgets/copy_dialog.dart';
+import '../widgets/settings_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,7 +26,10 @@ class _HomeScreenState extends State<HomeScreen> {
     'new': {},
   };
 
-  // 스크롤 진행도 추적
+  // 글씨 크기 상태 추가
+  double _titleFontSize = 20.0;
+  double _bodyFontSize = 16.0;
+
   double _scrollProgress = 0.0;
 
   @override
@@ -53,9 +57,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Row(
               children: [
+                // 설정 아이콘으로 변경!
                 IconButton(
-                  icon: const Icon(Icons.translate, color: Colors.black87),
-                  onPressed: _showTranslationDialog,
+                  icon: const Icon(Icons.settings, color: Colors.black87),
+                  onPressed: _showSettingsDialog,
                 ),
                 IconButton(
                   icon: Icon(
@@ -106,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onPageChanged: (index) {
             setState(() {
               _currentPage = index;
-              _scrollProgress = 0.0; // 페이지 변경 시 스크롤 초기화
+              _scrollProgress = 0.0;
             });
           },
           children: [
@@ -116,6 +121,8 @@ class _HomeScreenState extends State<HomeScreen> {
               translation: _currentTranslation,
               selectedVerses: _selectedVerses['old']!,
               onVerseToggle: (key) => _toggleVerse('old', key),
+              titleFontSize: _titleFontSize,
+              bodyFontSize: _bodyFontSize,
             ),
             BiblePage(
               sheetType: 'psalms',
@@ -123,6 +130,8 @@ class _HomeScreenState extends State<HomeScreen> {
               translation: _currentTranslation,
               selectedVerses: _selectedVerses['psalms']!,
               onVerseToggle: (key) => _toggleVerse('psalms', key),
+              titleFontSize: _titleFontSize,
+              bodyFontSize: _bodyFontSize,
             ),
             BiblePage(
               sheetType: 'new',
@@ -130,6 +139,8 @@ class _HomeScreenState extends State<HomeScreen> {
               translation: _currentTranslation,
               selectedVerses: _selectedVerses['new']!,
               onVerseToggle: (key) => _toggleVerse('new', key),
+              titleFontSize: _titleFontSize,
+              bodyFontSize: _bodyFontSize,
             ),
           ],
         ),
@@ -152,9 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_scrollProgress < 0.9) {
       return 1.0;
     } else {
-      // 0.9 ~ 1.0 사이를 0 ~ 1로 정규화
       final normalizedProgress = (_scrollProgress - 0.9) / 0.1;
-      // 1.0에서 0.5로 선형 감소
       return 1.0 - (normalizedProgress * 0.5);
     }
   }
@@ -176,17 +185,26 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showTranslationDialog() {
+  // 설정 다이얼로그 표시
+  void _showSettingsDialog() {
     showDialog(
       context: context,
-      builder: (context) => TranslationDialog(
+      builder: (context) => SettingsDialog(
         currentTranslation: _currentTranslation,
+        currentTitleFontSize: _titleFontSize,
+        currentBodyFontSize: _bodyFontSize,
         onTranslationChanged: (translation) {
           setState(() {
             _currentTranslation = translation;
             _selectedVerses['old']!.clear();
             _selectedVerses['psalms']!.clear();
             _selectedVerses['new']!.clear();
+          });
+        },
+        onFontSizeChanged: (titleSize, bodySize) {
+          setState(() {
+            _titleFontSize = titleSize;
+            _bodyFontSize = bodySize;
           });
         },
       ),
@@ -254,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
         reading.book,
         reading.startChapter,
         reading.endChapter,
-        verseRange: reading.verseRange,  // 이 줄 추가!
+        verseRange: reading.verseRange,
       );
 
       for (var verse in verses) {
@@ -284,14 +302,14 @@ class _HomeScreenState extends State<HomeScreen> {
         reading.book,
         reading.startChapter,
         reading.endChapter,
-        verseRange: reading.verseRange,  // 이 줄 추가!
+        verseRange: reading.verseRange,
       );
 
       final esvVerses = BibleService().getEsvVerses(
         reading.bookEng,
         reading.startChapter,
         reading.endChapter,
-        verseRange: reading.verseRange,  // 이 줄 추가!
+        verseRange: reading.verseRange,
       );
 
       for (var koreanVerse in koreanVerses) {
@@ -328,14 +346,14 @@ class _HomeScreenState extends State<HomeScreen> {
         reading.book,
         reading.startChapter,
         reading.endChapter,
-        verseRange: reading.verseRange,  // 이 줄 추가!
+        verseRange: reading.verseRange,
       );
 
       final esvVerses = BibleService().getEsvVerses(
         reading.bookEng,
         reading.startChapter,
         reading.endChapter,
-        verseRange: reading.verseRange,  // 이 줄 추가!
+        verseRange: reading.verseRange,
       );
 
       for (var koreanVerse in koreanVerses) {

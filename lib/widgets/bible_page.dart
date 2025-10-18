@@ -9,6 +9,8 @@ class BiblePage extends StatefulWidget {
   final Translation translation;
   final Set<String> selectedVerses;
   final Function(String) onVerseToggle;
+  final double titleFontSize;    // 추가!
+  final double bodyFontSize;     // 추가!
 
   const BiblePage({
     super.key,
@@ -17,6 +19,8 @@ class BiblePage extends StatefulWidget {
     required this.translation,
     required this.selectedVerses,
     required this.onVerseToggle,
+    required this.titleFontSize,    // 추가!
+    required this.bodyFontSize,     // 추가!
   });
 
   @override
@@ -308,8 +312,8 @@ class _BiblePageState extends State<BiblePage> {
             ? '$chapter$chapterLabel(개역개정)'
             : '$fullName $chapter$chapterLabel(개역개정)',
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 20,
+        style: TextStyle(
+          fontSize: widget.titleFontSize,  // 변경!
           fontWeight: FontWeight.bold,
           color: Colors.black87,
         ),
@@ -364,8 +368,8 @@ class _BiblePageState extends State<BiblePage> {
         ),
         child: RichText(
           text: TextSpan(
-            style: const TextStyle(
-              fontSize: 16,
+            style: TextStyle(
+              fontSize: widget.bodyFontSize,  // 변경!
               height: 1.6,
               color: Colors.black87,
             ),
