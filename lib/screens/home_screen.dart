@@ -254,6 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
         reading.book,
         reading.startChapter,
         reading.endChapter,
+        verseRange: reading.verseRange,  // 이 줄 추가!
       );
 
       for (var verse in verses) {
@@ -283,12 +284,14 @@ class _HomeScreenState extends State<HomeScreen> {
         reading.book,
         reading.startChapter,
         reading.endChapter,
+        verseRange: reading.verseRange,  // 이 줄 추가!
       );
 
       final esvVerses = BibleService().getEsvVerses(
         reading.bookEng,
         reading.startChapter,
         reading.endChapter,
+        verseRange: reading.verseRange,  // 이 줄 추가!
       );
 
       for (var koreanVerse in koreanVerses) {
@@ -325,12 +328,14 @@ class _HomeScreenState extends State<HomeScreen> {
         reading.book,
         reading.startChapter,
         reading.endChapter,
+        verseRange: reading.verseRange,  // 이 줄 추가!
       );
 
       final esvVerses = BibleService().getEsvVerses(
         reading.bookEng,
         reading.startChapter,
         reading.endChapter,
+        verseRange: reading.verseRange,  // 이 줄 추가!
       );
 
       for (var koreanVerse in koreanVerses) {

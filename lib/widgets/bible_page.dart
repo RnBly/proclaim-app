@@ -117,6 +117,7 @@ class _BiblePageState extends State<BiblePage> {
       reading.book,
       reading.startChapter,
       reading.endChapter,
+      verseRange: reading.verseRange,  // 이 줄 추가!
     );
 
     return ListView.builder(
@@ -134,12 +135,14 @@ class _BiblePageState extends State<BiblePage> {
       reading.bookEng,
       reading.startChapter,
       reading.endChapter,
+      verseRange: reading.verseRange,  // 이 줄 추가!
     );
 
     final koreanVerses = BibleService().getVerses(
       reading.book,
       reading.startChapter,
       reading.endChapter,
+      verseRange: reading.verseRange,  // 이 줄 추가!
     );
 
     return ListView.builder(
@@ -157,12 +160,14 @@ class _BiblePageState extends State<BiblePage> {
       reading.book,
       reading.startChapter,
       reading.endChapter,
+      verseRange: reading.verseRange,  // 이 줄 추가!
     );
 
     final esvVerses = BibleService().getEsvVerses(
       reading.bookEng,
       reading.startChapter,
       reading.endChapter,
+      verseRange: reading.verseRange,  // 이 줄 추가!
     );
 
     return ListView.builder(
@@ -291,10 +296,17 @@ class _BiblePageState extends State<BiblePage> {
   }
 
   Widget _buildChapterHeader(String fullName, int chapter, bool isEsv) {
+    final isPsalms = fullName.contains('시편') || fullName.toLowerCase().contains('psalm');
+    final chapterLabel = isPsalms ? '편' : '장';
+
     return Padding(
       padding: const EdgeInsets.only(top: 24, bottom: 16),
       child: Text(
-        isEsv ? '$fullName $chapter (ESV)' : '$fullName ${chapter}장(개역개정)',
+        isEsv
+            ? '$fullName $chapter (ESV)'
+            : isPsalms
+            ? '$chapter$chapterLabel(개역개정)'
+            : '$fullName $chapter$chapterLabel(개역개정)',
         textAlign: TextAlign.center,
         style: const TextStyle(
           fontSize: 20,
@@ -306,12 +318,17 @@ class _BiblePageState extends State<BiblePage> {
   }
 
   Widget _buildCompareChapterHeader(String koreanName, String englishName, int chapter) {
+    final isPsalms = koreanName.contains('시편') || englishName.toLowerCase().contains('psalm');
+    final chapterLabel = isPsalms ? '편' : '장';
+
     return Padding(
       padding: const EdgeInsets.only(top: 24, bottom: 16),
       child: Column(
         children: [
           Text(
-            '$koreanName ${chapter}장(개역개정)',
+            isPsalms
+                ? '$chapter$chapterLabel(개역개정)'
+                : '$koreanName $chapter$chapterLabel(개역개정)',
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 20,

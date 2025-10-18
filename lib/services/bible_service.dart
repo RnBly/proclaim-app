@@ -200,12 +200,21 @@ class BibleService {
     );
   }
 
-  List<Verse> getVerses(String book, int startChapter, int endChapter) {
+  List<Verse> getVerses(String book, int startChapter, int endChapter, {String? verseRange}) {
     final List<Verse> verses = [];
 
     if (_bibleData == null || _bibleData![book] == null) return verses;
 
     final bookData = _bibleData![book] as Map<String, dynamic>;
+
+    // 절 범위 파싱
+    int? startVerse;
+    int? endVerse;
+    if (verseRange != null && verseRange.contains('-')) {
+      final parts = verseRange.split('-');
+      startVerse = int.tryParse(parts[0].trim());
+      endVerse = int.tryParse(parts[1].trim());
+    }
 
     for (int chapter = startChapter; chapter <= endChapter; chapter++) {
       final chapterKey = chapter.toString();
@@ -215,35 +224,48 @@ class BibleService {
 
       chapterData.forEach((verseKey, verseText) {
         try {
-          // "5-6" 형태 처리
           if (verseKey.contains('-')) {
             final parts = verseKey.split('-');
-            final startVerse = int.parse(parts[0].trim());
-            final endVerse = int.parse(parts[1].trim());
+            final verseStart = int.parse(parts[0].trim());
+            final verseEnd = int.parse(parts[1].trim());
 
-            // 첫 번째 절만 실제 텍스트
+            if (startVerse != null && endVerse != null) {
+              if (verseStart < startVerse || verseStart > endVerse) {
+                return;
+              }
+            }
+
             verses.add(Verse(
               book: book,
               chapter: chapter,
-              verseNumber: startVerse,
+              verseNumber: verseStart,
               text: verseText.toString(),
             ));
 
-            // 나머지 절들은 "(N절에 포함)" 메시지
-            for (int v = startVerse + 1; v <= endVerse; v++) {
+            for (int v = verseStart + 1; v <= verseEnd; v++) {
+              if (startVerse != null && endVerse != null) {
+                if (v < startVerse || v > endVerse) continue;
+              }
               verses.add(Verse(
                 book: book,
                 chapter: chapter,
                 verseNumber: v,
-                text: '($startVerse절에 포함)',
+                text: '($verseStart절에 포함)',
               ));
             }
           } else {
-            // 일반 절 번호
+            final verseNum = int.parse(verseKey);
+
+            if (startVerse != null && endVerse != null) {
+              if (verseNum < startVerse || verseNum > endVerse) {
+                return;
+              }
+            }
+
             verses.add(Verse(
               book: book,
               chapter: chapter,
-              verseNumber: int.parse(verseKey),
+              verseNumber: verseNum,
               text: verseText.toString(),
             ));
           }
@@ -253,7 +275,6 @@ class BibleService {
       });
     }
 
-    // 장 번호 먼저, 그 다음 절 번호로 정렬
     verses.sort((a, b) {
       if (a.chapter != b.chapter) {
         return a.chapter.compareTo(b.chapter);
@@ -264,13 +285,22 @@ class BibleService {
     return verses;
   }
 
+
   // ESV 구절 가져오기
-  List<Verse> getEsvVerses(String bookEng, int startChapter, int endChapter) {
+  List<Verse> getEsvVerses(String bookEng, int startChapter, int endChapter, {String? verseRange}) {
     final List<Verse> verses = [];
 
     if (_bibleEsvData == null || _bibleEsvData![bookEng] == null) return verses;
 
     final bookData = _bibleEsvData![bookEng] as Map<String, dynamic>;
+
+    int? startVerse;
+    int? endVerse;
+    if (verseRange != null && verseRange.contains('-')) {
+      final parts = verseRange.split('-');
+      startVerse = int.tryParse(parts[0].trim());
+      endVerse = int.tryParse(parts[1].trim());
+    }
 
     for (int chapter = startChapter; chapter <= endChapter; chapter++) {
       final chapterKey = chapter.toString();
@@ -280,35 +310,48 @@ class BibleService {
 
       chapterData.forEach((verseKey, verseText) {
         try {
-          // "5-6" 형태 처리
           if (verseKey.contains('-')) {
             final parts = verseKey.split('-');
-            final startVerse = int.parse(parts[0].trim());
-            final endVerse = int.parse(parts[1].trim());
+            final verseStart = int.parse(parts[0].trim());
+            final verseEnd = int.parse(parts[1].trim());
 
-            // 첫 번째 절만 실제 텍스트
+            if (startVerse != null && endVerse != null) {
+              if (verseStart < startVerse || verseStart > endVerse) {
+                return;
+              }
+            }
+
             verses.add(Verse(
               book: bookEng,
               chapter: chapter,
-              verseNumber: startVerse,
+              verseNumber: verseStart,
               text: verseText.toString(),
             ));
 
-            // 나머지 절들은 "(Included in verse N)" 메시지
-            for (int v = startVerse + 1; v <= endVerse; v++) {
+            for (int v = verseStart + 1; v <= verseEnd; v++) {
+              if (startVerse != null && endVerse != null) {
+                if (v < startVerse || v > endVerse) continue;
+              }
               verses.add(Verse(
                 book: bookEng,
                 chapter: chapter,
                 verseNumber: v,
-                text: '(Included in verse $startVerse)',
+                text: '(Included in verse $verseStart)',
               ));
             }
           } else {
-            // 일반 절 번호
+            final verseNum = int.parse(verseKey);
+
+            if (startVerse != null && endVerse != null) {
+              if (verseNum < startVerse || verseNum > endVerse) {
+                return;
+              }
+            }
+
             verses.add(Verse(
               book: bookEng,
               chapter: chapter,
-              verseNumber: int.parse(verseKey),
+              verseNumber: verseNum,
               text: verseText.toString(),
             ));
           }
@@ -318,7 +361,6 @@ class BibleService {
       });
     }
 
-    // 장 번호 먼저, 그 다음 절 번호로 정렬
     verses.sort((a, b) {
       if (a.chapter != b.chapter) {
         return a.chapter.compareTo(b.chapter);
