@@ -30,11 +30,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
   static const double DEFAULT_TITLE_SIZE = 20.0;
   static const double DEFAULT_BODY_SIZE = 16.0;
 
-  // 범위
-  static const double MIN_TITLE_SIZE = 14.0;
-  static const double MAX_TITLE_SIZE = 32.0;
-  static const double MIN_BODY_SIZE = 12.0;
-  static const double MAX_BODY_SIZE = 24.0;
+  // 범위 수정!
+  static const double MIN_TITLE_SIZE = 18.0;  // 20에서 -2만
+  static const double MAX_TITLE_SIZE = 40.0;  // 32에서 40으로 증가
+  static const double MIN_BODY_SIZE = 14.0;   // 16에서 -2만
+  static const double MAX_BODY_SIZE = 32.0;   // 24에서 32로 증가
 
   @override
   void initState() {

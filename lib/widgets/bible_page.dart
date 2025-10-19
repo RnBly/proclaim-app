@@ -9,8 +9,8 @@ class BiblePage extends StatefulWidget {
   final Translation translation;
   final Set<String> selectedVerses;
   final Function(String) onVerseToggle;
-  final double titleFontSize;    // 추가!
-  final double bodyFontSize;     // 추가!
+  final double titleFontSize;
+  final double bodyFontSize;
 
   const BiblePage({
     super.key,
@@ -19,8 +19,8 @@ class BiblePage extends StatefulWidget {
     required this.translation,
     required this.selectedVerses,
     required this.onVerseToggle,
-    required this.titleFontSize,    // 추가!
-    required this.bodyFontSize,     // 추가!
+    required this.titleFontSize,
+    required this.bodyFontSize,
   });
 
   @override
@@ -92,7 +92,7 @@ class _BiblePageState extends State<BiblePage> {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final indicatorHeight = constraints.maxHeight * 0.1; // 인디케이터 높이 (더 짧게)
+          final indicatorHeight = constraints.maxHeight * 0.1;
           final maxTop = constraints.maxHeight - indicatorHeight;
           final currentTop = maxTop * _scrollProgress;
 
@@ -104,7 +104,7 @@ class _BiblePageState extends State<BiblePage> {
                   width: 3,
                   height: indicatorHeight,
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.3), // 투명도 추가
+                    color: Colors.blue.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(1.5),
                   ),
                 ),
@@ -121,7 +121,7 @@ class _BiblePageState extends State<BiblePage> {
       reading.book,
       reading.startChapter,
       reading.endChapter,
-      verseRange: reading.verseRange,  // 이 줄 추가!
+      verseRange: reading.verseRange,
     );
 
     return ListView.builder(
@@ -139,14 +139,14 @@ class _BiblePageState extends State<BiblePage> {
       reading.bookEng,
       reading.startChapter,
       reading.endChapter,
-      verseRange: reading.verseRange,  // 이 줄 추가!
+      verseRange: reading.verseRange,
     );
 
     final koreanVerses = BibleService().getVerses(
       reading.book,
       reading.startChapter,
       reading.endChapter,
-      verseRange: reading.verseRange,  // 이 줄 추가!
+      verseRange: reading.verseRange,
     );
 
     return ListView.builder(
@@ -164,14 +164,14 @@ class _BiblePageState extends State<BiblePage> {
       reading.book,
       reading.startChapter,
       reading.endChapter,
-      verseRange: reading.verseRange,  // 이 줄 추가!
+      verseRange: reading.verseRange,
     );
 
     final esvVerses = BibleService().getEsvVerses(
       reading.bookEng,
       reading.startChapter,
       reading.endChapter,
-      verseRange: reading.verseRange,  // 이 줄 추가!
+      verseRange: reading.verseRange,
     );
 
     return ListView.builder(
@@ -309,11 +309,11 @@ class _BiblePageState extends State<BiblePage> {
         isEsv
             ? '$fullName $chapter (ESV)'
             : isPsalms
-            ? '$chapter$chapterLabel(개역개정)'
+            ? '시편 $chapter$chapterLabel(개역개정)'  // '시편' 추가!
             : '$fullName $chapter$chapterLabel(개역개정)',
         textAlign: TextAlign.center,
         style: TextStyle(
-          fontSize: widget.titleFontSize,  // 변경!
+          fontSize: widget.titleFontSize,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
         ),
@@ -331,11 +331,11 @@ class _BiblePageState extends State<BiblePage> {
         children: [
           Text(
             isPsalms
-                ? '$chapter$chapterLabel(개역개정)'
+                ? '시편 $chapter$chapterLabel(개역개정)'
                 : '$koreanName $chapter$chapterLabel(개역개정)',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 20,
+            style: TextStyle(
+              fontSize: widget.titleFontSize,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
@@ -344,8 +344,8 @@ class _BiblePageState extends State<BiblePage> {
           Text(
             '$englishName $chapter (ESV)',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
+            style: TextStyle(
+              fontSize: widget.titleFontSize * 0.8,
               color: Colors.black54,
             ),
           ),
@@ -369,7 +369,7 @@ class _BiblePageState extends State<BiblePage> {
         child: RichText(
           text: TextSpan(
             style: TextStyle(
-              fontSize: widget.bodyFontSize,  // 변경!
+              fontSize: widget.bodyFontSize,
               height: 1.6,
               color: Colors.black87,
             ),
@@ -406,8 +406,8 @@ class _BiblePageState extends State<BiblePage> {
           children: [
             RichText(
               text: TextSpan(
-                style: const TextStyle(
-                  fontSize: 16,
+                style: TextStyle(
+                  fontSize: widget.bodyFontSize,
                   height: 1.6,
                   color: Colors.black87,
                 ),
@@ -426,8 +426,8 @@ class _BiblePageState extends State<BiblePage> {
             const SizedBox(height: 8),
             RichText(
               text: TextSpan(
-                style: const TextStyle(
-                  fontSize: 14,
+                style: TextStyle(
+                  fontSize: widget.bodyFontSize,
                   height: 1.6,
                   color: Colors.black54,
                 ),
