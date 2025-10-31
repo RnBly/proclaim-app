@@ -62,15 +62,6 @@ class _BiblePageState extends State<BiblePage> {
       return const Center(child: Text('데이터를 불러올 수 없습니다'));
     }
 
-<<<<<<< HEAD
-    if (translation == Translation.korean) {
-      return _buildKoreanView(reading);
-    } else if (translation == Translation.esv) {
-      return _buildEsvView(reading);
-    } else {
-      return _buildCompareView(reading);
-    }
-=======
     return Stack(
       children: [
         // 메인 콘텐츠
@@ -123,7 +114,6 @@ class _BiblePageState extends State<BiblePage> {
         },
       ),
     );
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
   }
 
   Widget _buildKoreanView(BibleReading reading) {
@@ -149,27 +139,18 @@ class _BiblePageState extends State<BiblePage> {
       reading.bookEng,
       reading.startChapter,
       reading.endChapter,
-<<<<<<< HEAD
-=======
       verseRange: reading.verseRange,
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
     );
 
     final koreanVerses = BibleService().getVerses(
       reading.book,
       reading.startChapter,
       reading.endChapter,
-<<<<<<< HEAD
-    );
-
-    return ListView.builder(
-=======
       verseRange: reading.verseRange,
     );
 
     return ListView.builder(
       controller: _scrollController,
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       padding: const EdgeInsets.all(16),
       itemCount: _getItemCount(verses),
       itemBuilder: (context, index) {
@@ -183,27 +164,18 @@ class _BiblePageState extends State<BiblePage> {
       reading.book,
       reading.startChapter,
       reading.endChapter,
-<<<<<<< HEAD
-=======
       verseRange: reading.verseRange,
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
     );
 
     final esvVerses = BibleService().getEsvVerses(
       reading.bookEng,
       reading.startChapter,
       reading.endChapter,
-<<<<<<< HEAD
-    );
-
-    return ListView.builder(
-=======
       verseRange: reading.verseRange,
     );
 
     return ListView.builder(
       controller: _scrollController,
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       padding: const EdgeInsets.all(16),
       itemCount: _getCompareItemCount(koreanVerses),
       itemBuilder: (context, index) {
@@ -282,10 +254,6 @@ class _BiblePageState extends State<BiblePage> {
       }
 
       if (currentIndex == index) {
-<<<<<<< HEAD
-        // ESV 절이지만 한글 key 사용
-=======
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
         final koreanVerse = koreanVerses.firstWhere(
               (v) => v.chapter == esvVerse.chapter && v.verseNumber == esvVerse.verseNumber,
           orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
@@ -332,12 +300,6 @@ class _BiblePageState extends State<BiblePage> {
   }
 
   Widget _buildChapterHeader(String fullName, int chapter, bool isEsv) {
-<<<<<<< HEAD
-    return Padding(
-      padding: const EdgeInsets.only(top: 24, bottom: 16),
-      child: Text(
-        isEsv ? '$fullName $chapter (ESV)' : '$fullName ${chapter}장(개역개정)',
-=======
     final isPsalms = fullName.contains('시편') || fullName.toLowerCase().contains('psalm');
     final chapterLabel = isPsalms ? '편' : '장';
 
@@ -349,7 +311,6 @@ class _BiblePageState extends State<BiblePage> {
             : isPsalms
             ? '시편 $chapter$chapterLabel(개역개정)'  // '시편' 추가!
             : '$fullName $chapter$chapterLabel(개역개정)',
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: widget.titleFontSize,
@@ -361,30 +322,20 @@ class _BiblePageState extends State<BiblePage> {
   }
 
   Widget _buildCompareChapterHeader(String koreanName, String englishName, int chapter) {
-<<<<<<< HEAD
-=======
     final isPsalms = koreanName.contains('시편') || englishName.toLowerCase().contains('psalm');
     final chapterLabel = isPsalms ? '편' : '장';
 
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
     return Padding(
       padding: const EdgeInsets.only(top: 24, bottom: 16),
       child: Column(
         children: [
           Text(
-<<<<<<< HEAD
-            '$koreanName ${chapter}장(개역개정)',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 20,
-=======
             isPsalms
                 ? '시편 $chapter$chapterLabel(개역개정)'
                 : '$koreanName $chapter$chapterLabel(개역개정)',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: widget.titleFontSize,
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
@@ -393,13 +344,8 @@ class _BiblePageState extends State<BiblePage> {
           Text(
             '$englishName $chapter (ESV)',
             textAlign: TextAlign.center,
-<<<<<<< HEAD
-            style: const TextStyle(
-              fontSize: 14,
-=======
             style: TextStyle(
               fontSize: widget.titleFontSize * 0.8,
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
               color: Colors.black54,
             ),
           ),
@@ -409,17 +355,10 @@ class _BiblePageState extends State<BiblePage> {
   }
 
   Widget _buildVerseItem(Verse verse, String keyToUse) {
-<<<<<<< HEAD
-    final isSelected = selectedVerses.contains(keyToUse);
-
-    return GestureDetector(
-      onTap: () => onVerseToggle(keyToUse),
-=======
     final isSelected = widget.selectedVerses.contains(keyToUse);
 
     return GestureDetector(
       onTap: () => widget.onVerseToggle(keyToUse),
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -451,17 +390,10 @@ class _BiblePageState extends State<BiblePage> {
   }
 
   Widget _buildCompareVerseItem(Verse koreanVerse, Verse esvVerse) {
-<<<<<<< HEAD
-    final isSelected = selectedVerses.contains(koreanVerse.key);
-
-    return GestureDetector(
-      onTap: () => onVerseToggle(koreanVerse.key),
-=======
     final isSelected = widget.selectedVerses.contains(koreanVerse.key);
 
     return GestureDetector(
       onTap: () => widget.onVerseToggle(koreanVerse.key),
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -474,13 +406,8 @@ class _BiblePageState extends State<BiblePage> {
           children: [
             RichText(
               text: TextSpan(
-<<<<<<< HEAD
-                style: const TextStyle(
-                  fontSize: 16,
-=======
                 style: TextStyle(
                   fontSize: widget.bodyFontSize,
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
                   height: 1.6,
                   color: Colors.black87,
                 ),
@@ -499,13 +426,8 @@ class _BiblePageState extends State<BiblePage> {
             const SizedBox(height: 8),
             RichText(
               text: TextSpan(
-<<<<<<< HEAD
-                style: const TextStyle(
-                  fontSize: 14,
-=======
                 style: TextStyle(
                   fontSize: widget.bodyFontSize,
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
                   height: 1.6,
                   color: Colors.black54,
                 ),

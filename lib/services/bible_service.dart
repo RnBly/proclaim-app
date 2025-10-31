@@ -227,16 +227,6 @@ class BibleService {
 
       chapterData.forEach((verseKey, verseText) {
         try {
-<<<<<<< HEAD
-          // "5-6" 형태 처리
-          if (verseKey.contains('-')) {
-            final parts = verseKey.split('-');
-            final startVerse = int.parse(parts[0].trim());
-            final endVerse = int.parse(parts[1].trim());
-
-            // 범위의 각 절에 대해 동일한 텍스트 추가
-            for (int v = startVerse; v <= endVerse; v++) {
-=======
           if (verseKey.contains('-')) {
             final parts = verseKey.split('-');
             final verseStart = int.parse(parts[0].trim());
@@ -259,22 +249,10 @@ class BibleService {
               if (startVerse != null && endVerse != null) {
                 if (v < startVerse || v > endVerse) continue;
               }
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
               verses.add(Verse(
                 book: book,
                 chapter: chapter,
                 verseNumber: v,
-<<<<<<< HEAD
-                text: verseText.toString(),
-              ));
-            }
-          } else {
-            // 일반 절 번호
-            verses.add(Verse(
-              book: book,
-              chapter: chapter,
-              verseNumber: int.parse(verseKey),
-=======
                 text: '($verseStart절에 포함)',
               ));
             }
@@ -291,65 +269,12 @@ class BibleService {
               book: book,
               chapter: chapter,
               verseNumber: verseNum,
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
               text: verseText.toString(),
             ));
           }
         } catch (e) {
           print('Error parsing verse $book $chapter:$verseKey - $e');
         }
-<<<<<<< HEAD
-      });
-    }
-
-    return verses;
-  }
-
-  // ESV 구절 가져오기
-  List<Verse> getEsvVerses(String bookEng, int startChapter, int endChapter) {
-    final List<Verse> verses = [];
-
-    if (_bibleEsvData == null || _bibleEsvData![bookEng] == null) return verses;
-
-    final bookData = _bibleEsvData![bookEng] as Map<String, dynamic>;
-
-    for (int chapter = startChapter; chapter <= endChapter; chapter++) {
-      final chapterKey = chapter.toString();
-      if (bookData[chapterKey] == null) continue;
-
-      final chapterData = bookData[chapterKey] as Map<String, dynamic>;
-
-      chapterData.forEach((verseKey, verseText) {
-        try {
-          // "5-6" 형태 처리
-          if (verseKey.contains('-')) {
-            final parts = verseKey.split('-');
-            final startVerse = int.parse(parts[0].trim());
-            final endVerse = int.parse(parts[1].trim());
-
-            // 범위의 각 절에 대해 동일한 텍스트 추가
-            for (int v = startVerse; v <= endVerse; v++) {
-              verses.add(Verse(
-                book: bookEng,
-                chapter: chapter,
-                verseNumber: v,
-                text: verseText.toString(),
-              ));
-            }
-          } else {
-            // 일반 절 번호
-            verses.add(Verse(
-              book: bookEng,
-              chapter: chapter,
-              verseNumber: int.parse(verseKey),
-              text: verseText.toString(),
-            ));
-          }
-        } catch (e) {
-          print('Error parsing verse $bookEng $chapter:$verseKey - $e');
-        }
-=======
->>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       });
     }
 
