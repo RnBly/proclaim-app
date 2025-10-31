@@ -94,4 +94,9 @@ flutter:
   assets:
     - assets/Proclaim.xlsx
     - assets/bible.json
+<<<<<<< HEAD
     - assets/bible_esv.json
+=======
+    - assets/bible_esv.json
+    - assets/images/shofar_logo.png
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d

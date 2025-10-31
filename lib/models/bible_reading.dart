@@ -6,6 +6,7 @@ class BibleReading {
   final int endChapter;
   final String fullName;
   final String fullNameEng;
+  final String? verseRange; // 추가!
 
   BibleReading({
     required this.date,
@@ -15,6 +16,7 @@ class BibleReading {
     required this.endChapter,
     required this.fullName,
     required this.fullNameEng,
+    this.verseRange,
   });
 
   factory BibleReading.fromMap(Map<String, dynamic> map) {
@@ -26,6 +28,7 @@ class BibleReading {
       endChapter: map['End Chapter'] as int,
       fullName: map['Full Name'] as String,
       fullNameEng: map['Full Name(ENG)'] as String,
+      verseRange: map['Verse']?.toString(),
     );
   }
 }

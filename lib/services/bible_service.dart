@@ -163,6 +163,7 @@ class BibleService {
           'End Chapter': int.tryParse(row[4]?.value.toString() ?? '0') ?? 0,
           'Full Name': row[5]?.value.toString() ?? '',
           'Full Name(ENG)': row[6]?.value.toString() ?? '',
+          'Verse': row[7]?.value.toString(),  // ← 이 줄이 있어야 함!
         };
         readings.add(BibleReading.fromMap(map));
       } catch (e) {
@@ -200,12 +201,23 @@ class BibleService {
     );
   }
 
-  List<Verse> getVerses(String book, int startChapter, int endChapter) {
+  List<Verse> getVerses(String book, int startChapter, int endChapter, {String? verseRange}) {
+    print('getVerses called: book=$book, chapters=$startChapter-$endChapter, verseRange=$verseRange'); // ← 추가!
+
     final List<Verse> verses = [];
 
     if (_bibleData == null || _bibleData![book] == null) return verses;
 
     final bookData = _bibleData![book] as Map<String, dynamic>;
+
+    // 절 범위 파싱
+    int? startVerse;
+    int? endVerse;
+    if (verseRange != null && verseRange.contains('-')) {
+      final parts = verseRange.split('-');
+      startVerse = int.tryParse(parts[0].trim());
+      endVerse = int.tryParse(parts[1].trim());
+    }
 
     for (int chapter = startChapter; chapter <= endChapter; chapter++) {
       final chapterKey = chapter.toString();
@@ -215,6 +227,7 @@ class BibleService {
 
       chapterData.forEach((verseKey, verseText) {
         try {
+<<<<<<< HEAD
           // "5-6" 형태 처리
           if (verseKey.contains('-')) {
             final parts = verseKey.split('-');
@@ -223,10 +236,35 @@ class BibleService {
 
             // 범위의 각 절에 대해 동일한 텍스트 추가
             for (int v = startVerse; v <= endVerse; v++) {
+=======
+          if (verseKey.contains('-')) {
+            final parts = verseKey.split('-');
+            final verseStart = int.parse(parts[0].trim());
+            final verseEnd = int.parse(parts[1].trim());
+
+            if (startVerse != null && endVerse != null) {
+              if (verseStart < startVerse || verseStart > endVerse) {
+                return;
+              }
+            }
+
+            verses.add(Verse(
+              book: book,
+              chapter: chapter,
+              verseNumber: verseStart,
+              text: verseText.toString(),
+            ));
+
+            for (int v = verseStart + 1; v <= verseEnd; v++) {
+              if (startVerse != null && endVerse != null) {
+                if (v < startVerse || v > endVerse) continue;
+              }
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
               verses.add(Verse(
                 book: book,
                 chapter: chapter,
                 verseNumber: v,
+<<<<<<< HEAD
                 text: verseText.toString(),
               ));
             }
@@ -236,12 +274,31 @@ class BibleService {
               book: book,
               chapter: chapter,
               verseNumber: int.parse(verseKey),
+=======
+                text: '($verseStart절에 포함)',
+              ));
+            }
+          } else {
+            final verseNum = int.parse(verseKey);
+
+            if (startVerse != null && endVerse != null) {
+              if (verseNum < startVerse || verseNum > endVerse) {
+                return;
+              }
+            }
+
+            verses.add(Verse(
+              book: book,
+              chapter: chapter,
+              verseNumber: verseNum,
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
               text: verseText.toString(),
             ));
           }
         } catch (e) {
           print('Error parsing verse $book $chapter:$verseKey - $e');
         }
+<<<<<<< HEAD
       });
     }
 
@@ -291,8 +348,103 @@ class BibleService {
         } catch (e) {
           print('Error parsing verse $bookEng $chapter:$verseKey - $e');
         }
+=======
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       });
     }
+
+    verses.sort((a, b) {
+      if (a.chapter != b.chapter) {
+        return a.chapter.compareTo(b.chapter);
+      }
+      return a.verseNumber.compareTo(b.verseNumber);
+    });
+
+    return verses;
+  }
+
+
+  // ESV 구절 가져오기
+  List<Verse> getEsvVerses(String bookEng, int startChapter, int endChapter, {String? verseRange}) {
+    final List<Verse> verses = [];
+
+    if (_bibleEsvData == null || _bibleEsvData![bookEng] == null) return verses;
+
+    final bookData = _bibleEsvData![bookEng] as Map<String, dynamic>;
+
+    int? startVerse;
+    int? endVerse;
+    if (verseRange != null && verseRange.contains('-')) {
+      final parts = verseRange.split('-');
+      startVerse = int.tryParse(parts[0].trim());
+      endVerse = int.tryParse(parts[1].trim());
+    }
+
+    for (int chapter = startChapter; chapter <= endChapter; chapter++) {
+      final chapterKey = chapter.toString();
+      if (bookData[chapterKey] == null) continue;
+
+      final chapterData = bookData[chapterKey] as Map<String, dynamic>;
+
+      chapterData.forEach((verseKey, verseText) {
+        try {
+          if (verseKey.contains('-')) {
+            final parts = verseKey.split('-');
+            final verseStart = int.parse(parts[0].trim());
+            final verseEnd = int.parse(parts[1].trim());
+
+            if (startVerse != null && endVerse != null) {
+              if (verseStart < startVerse || verseStart > endVerse) {
+                return;
+              }
+            }
+
+            verses.add(Verse(
+              book: bookEng,
+              chapter: chapter,
+              verseNumber: verseStart,
+              text: verseText.toString(),
+            ));
+
+            for (int v = verseStart + 1; v <= verseEnd; v++) {
+              if (startVerse != null && endVerse != null) {
+                if (v < startVerse || v > endVerse) continue;
+              }
+              verses.add(Verse(
+                book: bookEng,
+                chapter: chapter,
+                verseNumber: v,
+                text: '(Included in verse $verseStart)',
+              ));
+            }
+          } else {
+            final verseNum = int.parse(verseKey);
+
+            if (startVerse != null && endVerse != null) {
+              if (verseNum < startVerse || verseNum > endVerse) {
+                return;
+              }
+            }
+
+            verses.add(Verse(
+              book: bookEng,
+              chapter: chapter,
+              verseNumber: verseNum,
+              text: verseText.toString(),
+            ));
+          }
+        } catch (e) {
+          print('Error parsing verse $bookEng $chapter:$verseKey - $e');
+        }
+      });
+    }
+
+    verses.sort((a, b) {
+      if (a.chapter != b.chapter) {
+        return a.chapter.compareTo(b.chapter);
+      }
+      return a.verseNumber.compareTo(b.verseNumber);
+    });
 
     return verses;
   }

@@ -3,12 +3,14 @@ import '../services/bible_service.dart';
 import '../models/bible_reading.dart';
 import 'translation_dialog.dart';
 
-class BiblePage extends StatelessWidget {
+class BiblePage extends StatefulWidget {
   final String sheetType;
   final DateTime selectedDate;
   final Translation translation;
   final Set<String> selectedVerses;
   final Function(String) onVerseToggle;
+  final double titleFontSize;
+  final double bodyFontSize;
 
   const BiblePage({
     super.key,
@@ -17,16 +19,50 @@ class BiblePage extends StatelessWidget {
     required this.translation,
     required this.selectedVerses,
     required this.onVerseToggle,
+    required this.titleFontSize,
+    required this.bodyFontSize,
   });
 
   @override
+  State<BiblePage> createState() => _BiblePageState();
+}
+
+class _BiblePageState extends State<BiblePage> {
+  final ScrollController _scrollController = ScrollController();
+  double _scrollProgress = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_updateScrollProgress);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_updateScrollProgress);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _updateScrollProgress() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+      setState(() {
+        _scrollProgress = maxScroll > 0 ? currentScroll / maxScroll : 0.0;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final reading = BibleService().getReadingForDate(selectedDate, sheetType);
+    final reading = BibleService().getReadingForDate(widget.selectedDate, widget.sheetType);
 
     if (reading == null) {
       return const Center(child: Text('데이터를 불러올 수 없습니다'));
     }
 
+<<<<<<< HEAD
     if (translation == Translation.korean) {
       return _buildKoreanView(reading);
     } else if (translation == Translation.esv) {
@@ -34,6 +70,60 @@ class BiblePage extends StatelessWidget {
     } else {
       return _buildCompareView(reading);
     }
+=======
+    return Stack(
+      children: [
+        // 메인 콘텐츠
+        if (widget.translation == Translation.korean)
+          _buildKoreanView(reading)
+        else if (widget.translation == Translation.esv)
+          _buildEsvView(reading)
+        else
+          _buildCompareView(reading),
+
+        // 스크롤 진행도 표시 (오른쪽)
+        Positioned(
+          right: 4,
+          top: 20,
+          bottom: 20,
+          child: _buildScrollIndicator(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScrollIndicator() {
+    return Container(
+      width: 3,
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(1.5),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final indicatorHeight = constraints.maxHeight * 0.1;
+          final maxTop = constraints.maxHeight - indicatorHeight;
+          final currentTop = maxTop * _scrollProgress;
+
+          return Stack(
+            children: [
+              Positioned(
+                top: currentTop,
+                child: Container(
+                  width: 3,
+                  height: indicatorHeight,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(1.5),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
   }
 
   Widget _buildKoreanView(BibleReading reading) {
@@ -41,9 +131,11 @@ class BiblePage extends StatelessWidget {
       reading.book,
       reading.startChapter,
       reading.endChapter,
+      verseRange: reading.verseRange,
     );
 
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.all(16),
       itemCount: _getItemCount(verses),
       itemBuilder: (context, index) {
@@ -57,15 +149,27 @@ class BiblePage extends StatelessWidget {
       reading.bookEng,
       reading.startChapter,
       reading.endChapter,
+<<<<<<< HEAD
+=======
+      verseRange: reading.verseRange,
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
     );
 
     final koreanVerses = BibleService().getVerses(
       reading.book,
       reading.startChapter,
       reading.endChapter,
+<<<<<<< HEAD
     );
 
     return ListView.builder(
+=======
+      verseRange: reading.verseRange,
+    );
+
+    return ListView.builder(
+      controller: _scrollController,
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       padding: const EdgeInsets.all(16),
       itemCount: _getItemCount(verses),
       itemBuilder: (context, index) {
@@ -79,15 +183,27 @@ class BiblePage extends StatelessWidget {
       reading.book,
       reading.startChapter,
       reading.endChapter,
+<<<<<<< HEAD
+=======
+      verseRange: reading.verseRange,
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
     );
 
     final esvVerses = BibleService().getEsvVerses(
       reading.bookEng,
       reading.startChapter,
       reading.endChapter,
+<<<<<<< HEAD
     );
 
     return ListView.builder(
+=======
+      verseRange: reading.verseRange,
+    );
+
+    return ListView.builder(
+      controller: _scrollController,
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       padding: const EdgeInsets.all(16),
       itemCount: _getCompareItemCount(koreanVerses),
       itemBuilder: (context, index) {
@@ -166,7 +282,10 @@ class BiblePage extends StatelessWidget {
       }
 
       if (currentIndex == index) {
+<<<<<<< HEAD
         // ESV 절이지만 한글 key 사용
+=======
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
         final koreanVerse = koreanVerses.firstWhere(
               (v) => v.chapter == esvVerse.chapter && v.verseNumber == esvVerse.verseNumber,
           orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
@@ -213,13 +332,27 @@ class BiblePage extends StatelessWidget {
   }
 
   Widget _buildChapterHeader(String fullName, int chapter, bool isEsv) {
+<<<<<<< HEAD
     return Padding(
       padding: const EdgeInsets.only(top: 24, bottom: 16),
       child: Text(
         isEsv ? '$fullName $chapter (ESV)' : '$fullName ${chapter}장(개역개정)',
+=======
+    final isPsalms = fullName.contains('시편') || fullName.toLowerCase().contains('psalm');
+    final chapterLabel = isPsalms ? '편' : '장';
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 24, bottom: 16),
+      child: Text(
+        isEsv
+            ? '$fullName $chapter (ESV)'
+            : isPsalms
+            ? '시편 $chapter$chapterLabel(개역개정)'  // '시편' 추가!
+            : '$fullName $chapter$chapterLabel(개역개정)',
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 20,
+        style: TextStyle(
+          fontSize: widget.titleFontSize,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
         ),
@@ -228,15 +361,30 @@ class BiblePage extends StatelessWidget {
   }
 
   Widget _buildCompareChapterHeader(String koreanName, String englishName, int chapter) {
+<<<<<<< HEAD
+=======
+    final isPsalms = koreanName.contains('시편') || englishName.toLowerCase().contains('psalm');
+    final chapterLabel = isPsalms ? '편' : '장';
+
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
     return Padding(
       padding: const EdgeInsets.only(top: 24, bottom: 16),
       child: Column(
         children: [
           Text(
+<<<<<<< HEAD
             '$koreanName ${chapter}장(개역개정)',
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 20,
+=======
+            isPsalms
+                ? '시편 $chapter$chapterLabel(개역개정)'
+                : '$koreanName $chapter$chapterLabel(개역개정)',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: widget.titleFontSize,
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
@@ -245,8 +393,13 @@ class BiblePage extends StatelessWidget {
           Text(
             '$englishName $chapter (ESV)',
             textAlign: TextAlign.center,
+<<<<<<< HEAD
             style: const TextStyle(
               fontSize: 14,
+=======
+            style: TextStyle(
+              fontSize: widget.titleFontSize * 0.8,
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
               color: Colors.black54,
             ),
           ),
@@ -256,10 +409,17 @@ class BiblePage extends StatelessWidget {
   }
 
   Widget _buildVerseItem(Verse verse, String keyToUse) {
+<<<<<<< HEAD
     final isSelected = selectedVerses.contains(keyToUse);
 
     return GestureDetector(
       onTap: () => onVerseToggle(keyToUse),
+=======
+    final isSelected = widget.selectedVerses.contains(keyToUse);
+
+    return GestureDetector(
+      onTap: () => widget.onVerseToggle(keyToUse),
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -269,8 +429,8 @@ class BiblePage extends StatelessWidget {
         ),
         child: RichText(
           text: TextSpan(
-            style: const TextStyle(
-              fontSize: 16,
+            style: TextStyle(
+              fontSize: widget.bodyFontSize,
               height: 1.6,
               color: Colors.black87,
             ),
@@ -291,10 +451,17 @@ class BiblePage extends StatelessWidget {
   }
 
   Widget _buildCompareVerseItem(Verse koreanVerse, Verse esvVerse) {
+<<<<<<< HEAD
     final isSelected = selectedVerses.contains(koreanVerse.key);
 
     return GestureDetector(
       onTap: () => onVerseToggle(koreanVerse.key),
+=======
+    final isSelected = widget.selectedVerses.contains(koreanVerse.key);
+
+    return GestureDetector(
+      onTap: () => widget.onVerseToggle(koreanVerse.key),
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -307,8 +474,13 @@ class BiblePage extends StatelessWidget {
           children: [
             RichText(
               text: TextSpan(
+<<<<<<< HEAD
                 style: const TextStyle(
                   fontSize: 16,
+=======
+                style: TextStyle(
+                  fontSize: widget.bodyFontSize,
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
                   height: 1.6,
                   color: Colors.black87,
                 ),
@@ -327,8 +499,13 @@ class BiblePage extends StatelessWidget {
             const SizedBox(height: 8),
             RichText(
               text: TextSpan(
+<<<<<<< HEAD
                 style: const TextStyle(
                   fontSize: 14,
+=======
+                style: TextStyle(
+                  fontSize: widget.bodyFontSize,
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
                   height: 1.6,
                   color: Colors.black54,
                 ),

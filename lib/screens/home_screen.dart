@@ -6,6 +6,10 @@ import '../widgets/bible_page.dart';
 import '../widgets/date_picker_dialog.dart' as custom;
 import '../widgets/translation_dialog.dart';
 import '../widgets/copy_dialog.dart';
+<<<<<<< HEAD
+=======
+import '../widgets/settings_dialog.dart';
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,6 +28,12 @@ class _HomeScreenState extends State<HomeScreen> {
     'psalms': {},
     'new': {},
   };
+
+  // 글씨 크기 상태 추가
+  double _titleFontSize = 20.0;
+  double _bodyFontSize = 16.0;
+
+  double _scrollProgress = 0.0;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +60,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Row(
               children: [
+                // 설정 아이콘으로 변경!
+                IconButton(
+                  icon: const Icon(Icons.settings, color: Colors.black87),
+                  onPressed: _showSettingsDialog,
+                ),
                 IconButton(
                   icon: const Icon(Icons.translate, color: Colors.black87),
                   onPressed: _showTranslationDialog,
@@ -87,13 +102,18 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _currentPage = index;
-          });
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollUpdateNotification) {
+            final maxScroll = notification.metrics.maxScrollExtent;
+            final currentScroll = notification.metrics.pixels;
+            setState(() {
+              _scrollProgress = maxScroll > 0 ? currentScroll / maxScroll : 0.0;
+            });
+          }
+          return false;
         },
+<<<<<<< HEAD
         children: [
           BiblePage(
             sheetType: 'old',
@@ -117,15 +137,68 @@ class _HomeScreenState extends State<HomeScreen> {
             onVerseToggle: (key) => _toggleVerse('new', key),
           ),
         ],
+=======
+        child: PageView(
+          controller: _pageController,
+          onPageChanged: (index) {
+            setState(() {
+              _currentPage = index;
+              _scrollProgress = 0.0;
+            });
+          },
+          children: [
+            BiblePage(
+              sheetType: 'old',
+              selectedDate: _selectedDate,
+              translation: _currentTranslation,
+              selectedVerses: _selectedVerses['old']!,
+              onVerseToggle: (key) => _toggleVerse('old', key),
+              titleFontSize: _titleFontSize,
+              bodyFontSize: _bodyFontSize,
+            ),
+            BiblePage(
+              sheetType: 'psalms',
+              selectedDate: _selectedDate,
+              translation: _currentTranslation,
+              selectedVerses: _selectedVerses['psalms']!,
+              onVerseToggle: (key) => _toggleVerse('psalms', key),
+              titleFontSize: _titleFontSize,
+              bodyFontSize: _bodyFontSize,
+            ),
+            BiblePage(
+              sheetType: 'new',
+              selectedDate: _selectedDate,
+              translation: _currentTranslation,
+              selectedVerses: _selectedVerses['new']!,
+              onVerseToggle: (key) => _toggleVerse('new', key),
+              titleFontSize: _titleFontSize,
+              bodyFontSize: _bodyFontSize,
+            ),
+          ],
+        ),
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       ),
       floatingActionButton: _hasSelectedVerses()
-          ? FloatingActionButton(
-        onPressed: _copySelectedVerses,
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.copy, color: Colors.white),
+          ? Opacity(
+        opacity: _getButtonOpacity(),
+        child: FloatingActionButton(
+          onPressed: _copySelectedVerses,
+          backgroundColor: Colors.blue,
+          child: const Icon(Icons.copy, color: Colors.white),
+        ),
       )
           : null,
     );
+  }
+
+  // 복사 버튼 투명도 계산 (90% ~ 100% 사이에서 1.0 → 0.5)
+  double _getButtonOpacity() {
+    if (_scrollProgress < 0.9) {
+      return 1.0;
+    } else {
+      final normalizedProgress = (_scrollProgress - 0.9) / 0.1;
+      return 1.0 - (normalizedProgress * 0.5);
+    }
   }
 
   void _showDatePicker() {
@@ -136,6 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onDateSelected: (date) {
           setState(() {
             _selectedDate = date;
+<<<<<<< HEAD
             _selectedVerses['old']!.clear();
             _selectedVerses['psalms']!.clear();
             _selectedVerses['new']!.clear();
@@ -153,9 +227,37 @@ class _HomeScreenState extends State<HomeScreen> {
         onTranslationChanged: (translation) {
           setState(() {
             _currentTranslation = translation;
+=======
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
             _selectedVerses['old']!.clear();
             _selectedVerses['psalms']!.clear();
             _selectedVerses['new']!.clear();
+          });
+        },
+      ),
+    );
+  }
+
+  // 설정 다이얼로그 표시
+  void _showSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => SettingsDialog(
+        currentTranslation: _currentTranslation,
+        currentTitleFontSize: _titleFontSize,
+        currentBodyFontSize: _bodyFontSize,
+        onTranslationChanged: (translation) {
+          setState(() {
+            _currentTranslation = translation;
+            _selectedVerses['old']!.clear();
+            _selectedVerses['psalms']!.clear();
+            _selectedVerses['new']!.clear();
+          });
+        },
+        onFontSizeChanged: (titleSize, bodySize) {
+          setState(() {
+            _titleFontSize = titleSize;
+            _bodyFontSize = bodySize;
           });
         },
       ),
@@ -177,7 +279,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _copySelectedVerses() async {
+<<<<<<< HEAD
     // 복사 형식 선택 다이얼로그 표시
+=======
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
     showDialog(
       context: context,
       builder: (context) => CopyDialog(
@@ -224,6 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
         reading.book,
         reading.startChapter,
         reading.endChapter,
+        verseRange: reading.verseRange,
       );
 
       for (var verse in verses) {
@@ -249,23 +355,38 @@ class _HomeScreenState extends State<HomeScreen> {
       final reading = BibleService().getReadingForDate(_selectedDate, sheetType);
       if (reading == null) continue;
 
+<<<<<<< HEAD
       // 한글 구절과 ESV 구절 모두 가져오기
+=======
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       final koreanVerses = BibleService().getVerses(
         reading.book,
         reading.startChapter,
         reading.endChapter,
+<<<<<<< HEAD
+=======
+        verseRange: reading.verseRange,
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       );
 
       final esvVerses = BibleService().getEsvVerses(
         reading.bookEng,
         reading.startChapter,
         reading.endChapter,
+<<<<<<< HEAD
       );
 
       // 한글 key로 선택된 것 확인
       for (var koreanVerse in koreanVerses) {
         if (_selectedVerses[sheetType]!.contains(koreanVerse.key)) {
           // 해당하는 ESV 구절 찾기
+=======
+        verseRange: reading.verseRange,
+      );
+
+      for (var koreanVerse in koreanVerses) {
+        if (_selectedVerses[sheetType]!.contains(koreanVerse.key)) {
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
           final esvVerse = esvVerses.firstWhere(
                 (v) => v.chapter == koreanVerse.chapter && v.verseNumber == koreanVerse.verseNumber,
             orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
@@ -273,7 +394,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
           if (esvVerse.text.isNotEmpty) {
             allSelected.add(SelectedVerseEsv(
+<<<<<<< HEAD
               bookEng: reading.bookEng,  // 약칭 사용
+=======
+              bookEng: reading.bookEng,
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
               fullNameEng: reading.fullNameEng,
               chapter: esvVerse.chapter,
               verseNumber: esvVerse.verseNumber,
@@ -298,12 +423,20 @@ class _HomeScreenState extends State<HomeScreen> {
         reading.book,
         reading.startChapter,
         reading.endChapter,
+<<<<<<< HEAD
+=======
+        verseRange: reading.verseRange,
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       );
 
       final esvVerses = BibleService().getEsvVerses(
         reading.bookEng,
         reading.startChapter,
         reading.endChapter,
+<<<<<<< HEAD
+=======
+        verseRange: reading.verseRange,
+>>>>>>> ce2b51823caa0e540017478402f5cc0fc66a3d9d
       );
 
       for (var koreanVerse in koreanVerses) {
