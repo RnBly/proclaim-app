@@ -27,8 +27,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late Translation _selectedTranslation;
 
   // 기본값
-  static const double DEFAULT_TITLE_SIZE = 20.0;
-  static const double DEFAULT_BODY_SIZE = 16.0;
+  static const double DEFAULT_TITLE_SIZE = 22.0;
+  static const double DEFAULT_BODY_SIZE = 20.0;
 
   // 범위 수정!
   static const double MIN_TITLE_SIZE = 18.0;  // 20에서 -2만

@@ -27,8 +27,8 @@ class _HomeScreenState extends State<HomeScreen> {
   };
 
   // 글씨 크기 상태 추가
-  double _titleFontSize = 20.0;
-  double _bodyFontSize = 16.0;
+  double _titleFontSize = 22.0;
+  double _bodyFontSize = 20.0;
 
   double _scrollProgress = 0.0;
 
