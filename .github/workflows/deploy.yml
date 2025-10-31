@@ -1,21 +1,56 @@
-name: Deploy Flutter Web to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.1'  # 이 부분을 변경!
+          flutter-version: '3.24.0'
           channel: 'stable'
+
+      - name: Create secrets.dart
+        run: |
+          mkdir -p lib/config
+          cat > lib/config/secrets.dart << 'EOFMARKER'
+          // lib/config/secrets.dart
+          // Auto-generated for deployment
+          
+          class Secrets {
+            // Google Sheets 설정
+            static const String SPREADSHEET_ID = '1dzHDX6LYR0qzkijQ_bWMBlSQGhGrMj4S';
+          
+            static const String OLD_TESTAMENT_SHEET = 'Old Testament';
+            static const String PSALMS_SHEET = 'Psalms';
+            static const String NEW_TESTAMENT_SHEET = 'New Testament';
+          
+            // GitHub URLs
+            static const String BIBLE_JSON_URL = 
+                'https://raw.githubusercontent.com/RnBly/proclaim-app/main/assets/bible.json';
+          
+            static const String BIBLE_ESV_JSON_URL = 
+                'https://raw.githubusercontent.com/RnBly/proclaim-app/main/assets/bible_esv.json';
+          
+            // Google Sheets URL 생성
+            static String getSheetCsvUrl(String sheetName) {
+              return 'https://docs.google.com/spreadsheets/d/$SPREADSHEET_ID/gviz/tq?tqx=out:csv&sheet=$sheetName';
+              return 'https://docs.google.com/spreadsheets/d/$SPREADSHEET_ID/gviz/tq?tqx=out:csv&sheet=$sheetName';
+            }
+          }
+          EOFMARKER
 
       - name: Get dependencies
         run: flutter pub get
