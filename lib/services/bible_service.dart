@@ -1,3 +1,5 @@
+// lib/services/bible_service.dart
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart';
@@ -5,20 +7,14 @@ import 'package:excel/excel.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+// import 'package:csv/csv.dart';  ← 이 줄 삭제!
 import '../models/bible_reading.dart';
+import '../config/secrets.dart';
 
 class BibleService {
   static final BibleService _instance = BibleService._internal();
   factory BibleService() => _instance;
   BibleService._internal();
-
-  // GitHub Raw URLs
-  static const String EXCEL_URL =
-      'https://raw.githubusercontent.com/RnBly/proclaim-app/main/assets/Proclaim.xlsx';
-  static const String BIBLE_JSON_URL =
-      'https://raw.githubusercontent.com/RnBly/proclaim-app/main/assets/bible.json';
-  static const String BIBLE_ESV_JSON_URL =
-      'https://raw.githubusercontent.com/RnBly/proclaim-app/main/assets/bible_esv.json';
 
   Map<String, dynamic>? _bibleData;
   Map<String, dynamic>? _bibleEsvData;
@@ -27,56 +23,173 @@ class BibleService {
   List<BibleReading>? _newTestamentData;
 
   Future<void> initialize() async {
+    print('🚀 Initializing Bible Service...');
+
     try {
-      await _loadFromRemote();
+      await _loadReadingPlanFromGoogleSheets();
+      print('✅ Loaded reading plan from Google Sheets');
     } catch (e) {
-      print('Remote load failed, using local assets: $e');
-      await _loadFromAssets();
+      print('⚠️ Google Sheets failed: $e');
+      print('📦 Using local Excel...');
+      await _loadExcelFromAssets();
+    }
+
+    try {
+      await _loadBibleFromGitHub();
+      print('✅ Loaded Bible data from GitHub');
+    } catch (e) {
+      print('⚠️ GitHub failed: $e');
+      print('📦 Using local JSON...');
+      await _loadBibleFromAssets();
     }
   }
 
-  // 원격 파일에서 로드
-  Future<void> _loadFromRemote() async {
+  // ===== Google Sheets에서 직접 읽기 =====
+
+  Future<void> _loadReadingPlanFromGoogleSheets() async {
+    print('📊 Loading from Google Sheets...');
+
+    final results = await Future.wait([
+      _fetchSheetAsCsv(Secrets.OLD_TESTAMENT_SHEET),
+      _fetchSheetAsCsv(Secrets.PSALMS_SHEET),
+      _fetchSheetAsCsv(Secrets.NEW_TESTAMENT_SHEET),
+    ]);
+
+    _oldTestamentData = _parseCsvData(results[0]);
+    _psalmsData = _parseCsvData(results[1]);
+    _newTestamentData = _parseCsvData(results[2]);
+
+    print('  ✓ Old Testament: ${_oldTestamentData?.length ?? 0} entries');
+    print('  ✓ Psalms: ${_psalmsData?.length ?? 0} entries');
+    print('  ✓ New Testament: ${_newTestamentData?.length ?? 0} entries');
+  }
+
+  Future<String> _fetchSheetAsCsv(String sheetName) async {
+    final url = Secrets.getSheetCsvUrl(sheetName);
+    print('  ⬇ Fetching $sheetName...');
+
+    final response = await http.get(Uri.parse(url)).timeout(
+      const Duration(seconds: 10),
+    );
+
+    if (response.statusCode == 200) {
+      print('  ✓ Fetched $sheetName');
+      return utf8.decode(response.bodyBytes);
+    } else {
+      throw Exception('Failed to fetch $sheetName: ${response.statusCode}');
+    }
+  }
+
+  // ===== CSV 파싱 (패키지 없이 직접 구현) =====
+
+  List<BibleReading> _parseCsvData(String csvString) {
+    final readings = <BibleReading>[];
+    final lines = csvString.split('\n');
+
+    // 첫 행은 헤더이므로 건너뛰기
+    for (int i = 1; i < lines.length; i++) {
+      final line = lines[i].trim();
+      if (line.isEmpty) continue;
+
+      try {
+        // CSV 파싱 (간단한 구현)
+        final row = _parseCsvLine(line);
+        if (row.length < 7) continue;
+
+        final map = {
+          'Date': row[0],
+          'Book': row[1],
+          'Book(ENG)': row[2],
+          'Start Chapter': int.tryParse(row[3]) ?? 0,
+          'End Chapter': int.tryParse(row[4]) ?? 0,
+          'Full Name': row[5],
+          'Full Name(ENG)': row[6],
+          'Verse': row.length > 7 ? row[7] : null,
+        };
+        readings.add(BibleReading.fromMap(map));
+      } catch (e) {
+        print('⚠️ Error parsing row $i: $e');
+      }
+    }
+
+    return readings;
+  }
+
+  // CSV 라인 파싱 (따옴표 처리 포함)
+  List<String> _parseCsvLine(String line) {
+    final result = <String>[];
+    final buffer = StringBuffer();
+    bool inQuotes = false;
+
+    for (int i = 0; i < line.length; i++) {
+      final char = line[i];
+
+      if (char == '"') {
+        inQuotes = !inQuotes;
+      } else if (char == ',' && !inQuotes) {
+        result.add(buffer.toString().trim());
+        buffer.clear();
+      } else {
+        buffer.write(char);
+      }
+    }
+
+    // 마지막 필드 추가
+    result.add(buffer.toString().trim());
+
+    return result;
+  }
+
+  // ===== GitHub에서 성경 데이터 로드 =====
+
+  Future<void> _loadBibleFromGitHub() async {
+    print('📥 Loading Bible data from GitHub...');
+
     final directory = await getApplicationDocumentsDirectory();
-    final excelPath = '${directory.path}/Proclaim.xlsx';
     final jsonPath = '${directory.path}/bible.json';
     final esvJsonPath = '${directory.path}/bible_esv.json';
 
-    await _downloadFile(EXCEL_URL, excelPath);
-    await _downloadFile(BIBLE_JSON_URL, jsonPath);
-    await _downloadFile(BIBLE_ESV_JSON_URL, esvJsonPath);
+    await _downloadFileWithCache(Secrets.BIBLE_JSON_URL, jsonPath, 'bible.json');
+    await _downloadFileWithCache(Secrets.BIBLE_ESV_JSON_URL, esvJsonPath, 'bible_esv.json');
 
-    await _loadExcelFromFile(excelPath);
-    await _loadBibleJsonFromFile(jsonPath);
-    await _loadBibleEsvJsonFromFile(esvJsonPath);
+    final jsonString = await File(jsonPath).readAsString();
+    _bibleData = json.decode(jsonString);
+
+    final esvJsonString = await File(esvJsonPath).readAsString();
+    _bibleEsvData = json.decode(esvJsonString);
+    _cleanEsvQuotes();
   }
 
-  // 파일 다운로드
-  Future<void> _downloadFile(String url, String savePath) async {
+  Future<void> _downloadFileWithCache(String url, String savePath, String fileName) async {
     final file = File(savePath);
 
-    // 24시간 이내 파일이 있으면 건너뛰기
     if (await file.exists()) {
       final lastModified = await file.lastModified();
-      if (DateTime.now().difference(lastModified).inHours < 24) {
-        print('Using cached file: $savePath');
+      final age = DateTime.now().difference(lastModified);
+
+      if (age.inHours < 24) {
+        print('  ✓ Using cached $fileName');
         return;
       }
     }
 
-    print('Downloading: $url');
+    print('  ⬇ Downloading $fileName...');
     final response = await http.get(Uri.parse(url));
+
     if (response.statusCode == 200) {
       await file.writeAsBytes(response.bodyBytes);
-      print('Downloaded: $savePath');
+      final sizeKB = (response.bodyBytes.length / 1024).toStringAsFixed(1);
+      print('  ✓ Downloaded $fileName ($sizeKB KB)');
     } else {
-      throw Exception('Failed to download: $url');
+      throw Exception('Failed to download $fileName');
     }
   }
 
-  // 로컬 파일에서 엑셀 로드
-  Future<void> _loadExcelFromFile(String path) async {
-    final bytes = await File(path).readAsBytes();
+  // ===== Assets에서 로드 (백업) =====
+
+  Future<void> _loadExcelFromAssets() async {
+    final ByteData data = await rootBundle.load('assets/Proclaim.xlsx');
+    final bytes = data.buffer.asUint8List();
     final excel = Excel.decodeBytes(bytes);
 
     _oldTestamentData = _parseSheet(excel, 'Old Testament');
@@ -84,38 +197,15 @@ class BibleService {
     _newTestamentData = _parseSheet(excel, 'New Testament');
   }
 
-  // 로컬 파일에서 JSON 로드
-  Future<void> _loadBibleJsonFromFile(String path) async {
-    final String jsonString = await File(path).readAsString();
-    _bibleData = json.decode(jsonString);
-  }
+  Future<void> _loadBibleFromAssets() async {
+    final bibleJson = await rootBundle.loadString('assets/bible.json');
+    _bibleData = json.decode(bibleJson);
 
-  // 로컬 파일에서 ESV JSON 로드
-  Future<void> _loadBibleEsvJsonFromFile(String path) async {
-    final String jsonString = await File(path).readAsString();
-    _bibleEsvData = json.decode(jsonString);
+    final esvJson = await rootBundle.loadString('assets/bible_esv.json');
+    _bibleEsvData = json.decode(esvJson);
     _cleanEsvQuotes();
   }
 
-  // Assets에서 로드 (백업용)
-  Future<void> _loadFromAssets() async {
-    await _loadBibleJson();
-    await _loadBibleEsvJson();
-    await _loadExcel();
-  }
-
-  Future<void> _loadBibleJson() async {
-    final String jsonString = await rootBundle.loadString('assets/bible.json');
-    _bibleData = json.decode(jsonString);
-  }
-
-  Future<void> _loadBibleEsvJson() async {
-    final String jsonString = await rootBundle.loadString('assets/bible_esv.json');
-    _bibleEsvData = json.decode(jsonString);
-    _cleanEsvQuotes();
-  }
-
-  // ESV JSON의 이스케이프된 따옴표 정리
   void _cleanEsvQuotes() {
     if (_bibleEsvData == null) return;
 
@@ -132,16 +222,6 @@ class BibleService {
         });
       }
     });
-  }
-
-  Future<void> _loadExcel() async {
-    final ByteData data = await rootBundle.load('assets/Proclaim.xlsx');
-    final bytes = data.buffer.asUint8List();
-    final excel = Excel.decodeBytes(bytes);
-
-    _oldTestamentData = _parseSheet(excel, 'Old Testament');
-    _psalmsData = _parseSheet(excel, 'Psalms');
-    _newTestamentData = _parseSheet(excel, 'New Testament');
   }
 
   List<BibleReading> _parseSheet(Excel excel, String sheetName) {
@@ -163,7 +243,7 @@ class BibleService {
           'End Chapter': int.tryParse(row[4]?.value.toString() ?? '0') ?? 0,
           'Full Name': row[5]?.value.toString() ?? '',
           'Full Name(ENG)': row[6]?.value.toString() ?? '',
-          'Verse': row[7]?.value.toString(),  // ← 이 줄이 있어야 함!
+          'Verse': row[7]?.value.toString(),
         };
         readings.add(BibleReading.fromMap(map));
       } catch (e) {
@@ -202,7 +282,7 @@ class BibleService {
   }
 
   List<Verse> getVerses(String book, int startChapter, int endChapter, {String? verseRange}) {
-    print('getVerses called: book=$book, chapters=$startChapter-$endChapter, verseRange=$verseRange'); // ← 추가!
+    print('getVerses called: book=$book, chapters=$startChapter-$endChapter, verseRange=$verseRange');
 
     final List<Verse> verses = [];
 
@@ -210,7 +290,6 @@ class BibleService {
 
     final bookData = _bibleData![book] as Map<String, dynamic>;
 
-    // 절 범위 파싱
     int? startVerse;
     int? endVerse;
     if (verseRange != null && verseRange.contains('-')) {
@@ -288,8 +367,6 @@ class BibleService {
     return verses;
   }
 
-
-  // ESV 구절 가져오기
   List<Verse> getEsvVerses(String bookEng, int startChapter, int endChapter, {String? verseRange}) {
     final List<Verse> verses = [];
 
@@ -555,23 +632,17 @@ class BibleService {
     return buffer.toString().trim();
   }
 
-  // 수동 새로고침 (강제 다운로드)
   Future<void> forceRefresh() async {
+    print('🔄 Force refreshing...');
+
     final directory = await getApplicationDocumentsDirectory();
-    final excelPath = '${directory.path}/Proclaim.xlsx';
-    final jsonPath = '${directory.path}/bible.json';
-    final esvJsonPath = '${directory.path}/bible_esv.json';
+    final jsonFile = File('${directory.path}/bible.json');
+    final esvJsonFile = File('${directory.path}/bible_esv.json');
 
-    // 캐시 파일 삭제
-    final excelFile = File(excelPath);
-    final jsonFile = File(jsonPath);
-    final esvJsonFile = File(esvJsonPath);
-
-    if (await excelFile.exists()) await excelFile.delete();
     if (await jsonFile.exists()) await jsonFile.delete();
     if (await esvJsonFile.exists()) await esvJsonFile.delete();
 
-    // 새로 다운로드
-    await _loadFromRemote();
+    await initialize();
+    print('✅ Force refresh completed');
   }
 }
