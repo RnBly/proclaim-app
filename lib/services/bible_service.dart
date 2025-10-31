@@ -7,7 +7,6 @@ import 'package:excel/excel.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
-// import 'package:csv/csv.dart';  ← 이 줄 삭제!
 import '../models/bible_reading.dart';
 import '../config/secrets.dart';
 
@@ -22,10 +21,13 @@ class BibleService {
   List<BibleReading>? _psalmsData;
   List<BibleReading>? _newTestamentData;
 
+  // ===== 초기화 =====
+
   Future<void> initialize() async {
     print('🚀 Initializing Bible Service...');
 
     try {
+      // 1. 읽기 계획: Google Sheets에서 직접 읽기
       await _loadReadingPlanFromGoogleSheets();
       print('✅ Loaded reading plan from Google Sheets');
     } catch (e) {
@@ -35,6 +37,7 @@ class BibleService {
     }
 
     try {
+      // 2. 성경 데이터: GitHub에서 읽기 (캐싱)
       await _loadBibleFromGitHub();
       print('✅ Loaded Bible data from GitHub');
     } catch (e) {
@@ -49,6 +52,7 @@ class BibleService {
   Future<void> _loadReadingPlanFromGoogleSheets() async {
     print('📊 Loading from Google Sheets...');
 
+    // 병렬 다운로드
     final results = await Future.wait([
       _fetchSheetAsCsv(Secrets.OLD_TESTAMENT_SHEET),
       _fetchSheetAsCsv(Secrets.PSALMS_SHEET),
@@ -92,7 +96,7 @@ class BibleService {
       if (line.isEmpty) continue;
 
       try {
-        // CSV 파싱 (간단한 구현)
+        // CSV 파싱
         final row = _parseCsvLine(line);
         if (row.length < 7) continue;
 
@@ -149,6 +153,7 @@ class BibleService {
     final jsonPath = '${directory.path}/bible.json';
     final esvJsonPath = '${directory.path}/bible_esv.json';
 
+    // 24시간 캐싱
     await _downloadFileWithCache(Secrets.BIBLE_JSON_URL, jsonPath, 'bible.json');
     await _downloadFileWithCache(Secrets.BIBLE_ESV_JSON_URL, esvJsonPath, 'bible_esv.json');
 
@@ -163,6 +168,7 @@ class BibleService {
   Future<void> _downloadFileWithCache(String url, String savePath, String fileName) async {
     final file = File(savePath);
 
+    // 24시간 캐시 체크
     if (await file.exists()) {
       final lastModified = await file.lastModified();
       final age = DateTime.now().difference(lastModified);
@@ -254,6 +260,8 @@ class BibleService {
     return readings;
   }
 
+  // ===== 읽기 계획 조회 =====
+
   BibleReading? getTodayReading(String sheetType) {
     final now = DateTime.now();
     return getReadingForDate(now, sheetType);
@@ -280,6 +288,8 @@ class BibleService {
       orElse: () => data!.first,
     );
   }
+
+  // ===== 성경 구절 조회 =====
 
   List<Verse> getVerses(String book, int startChapter, int endChapter, {String? verseRange}) {
     print('getVerses called: book=$book, chapters=$startChapter-$endChapter, verseRange=$verseRange');
@@ -450,6 +460,8 @@ class BibleService {
 
     return verses;
   }
+
+  // ===== 포맷팅 =====
 
   String formatSelectedVerses(List<SelectedVerse> verses) {
     if (verses.isEmpty) return '';
@@ -632,9 +644,12 @@ class BibleService {
     return buffer.toString().trim();
   }
 
+  // ===== 강제 새로고침 =====
+
   Future<void> forceRefresh() async {
     print('🔄 Force refreshing...');
 
+    // 캐시 파일 삭제
     final directory = await getApplicationDocumentsDirectory();
     final jsonFile = File('${directory.path}/bible.json');
     final esvJsonFile = File('${directory.path}/bible_esv.json');
@@ -642,6 +657,7 @@ class BibleService {
     if (await jsonFile.exists()) await jsonFile.delete();
     if (await esvJsonFile.exists()) await esvJsonFile.delete();
 
+    // 재로드
     await initialize();
     print('✅ Force refresh completed');
   }
