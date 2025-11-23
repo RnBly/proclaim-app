@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import '../services/bible_service.dart';
 import '../models/bible_reading.dart';
 import 'translation_dialog.dart';
+import '../config/meditation_colors.dart';
 
 class BiblePage extends StatefulWidget {
   final String sheetType;
   final DateTime selectedDate;
   final Translation translation;
   final Set<String> selectedVerses;
+  final Map<String, String> highlightedVerses;
   final Function(String) onVerseToggle;
+  final Function(String, int, int)? onMeditationView;
   final double titleFontSize;
   final double bodyFontSize;
 
@@ -18,7 +21,9 @@ class BiblePage extends StatefulWidget {
     required this.selectedDate,
     required this.translation,
     required this.selectedVerses,
+    required this.highlightedVerses,
     required this.onVerseToggle,
+    this.onMeditationView,
     required this.titleFontSize,
     required this.bodyFontSize,
   });
@@ -309,7 +314,7 @@ class _BiblePageState extends State<BiblePage> {
         isEsv
             ? '$fullName $chapter (ESV)'
             : isPsalms
-            ? '시편 $chapter$chapterLabel(개역개정)'  // '시편' 추가!
+            ? '시편 $chapter$chapterLabel(개역개정)'
             : '$fullName $chapter$chapterLabel(개역개정)',
         textAlign: TextAlign.center,
         style: TextStyle(
@@ -357,33 +362,78 @@ class _BiblePageState extends State<BiblePage> {
   Widget _buildVerseItem(Verse verse, String keyToUse) {
     final isSelected = widget.selectedVerses.contains(keyToUse);
 
+    // 하이라이트 색상 확인
+    final highlightKey = '${verse.book}-${verse.chapter}-${verse.verseNumber}';
+    final highlightColorName = widget.highlightedVerses[highlightKey];
+    final highlightColor = highlightColorName != null
+        ? MeditationColors.getColor(highlightColorName)
+        : null;
+    final isHighlighted = highlightColor != null;
+
     return GestureDetector(
       onTap: () => widget.onVerseToggle(keyToUse),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue.withOpacity(0.15) : Colors.transparent,
+          color: isSelected
+              ? Colors.blue.withOpacity(0.15)
+              : isHighlighted
+              ? highlightColor.withOpacity(0.3)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: RichText(
-          text: TextSpan(
-            style: TextStyle(
-              fontSize: widget.bodyFontSize,
-              height: 1.6,
-              color: Colors.black87,
-            ),
-            children: [
-              TextSpan(
-                text: '${verse.verseNumber}. ',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.blue,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: RichText(
+                text: TextSpan(
+                  style: TextStyle(
+                    fontSize: widget.bodyFontSize,
+                    height: 1.6,
+                    color: Colors.black87,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: '${verse.verseNumber}. ',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    TextSpan(text: verse.text),
+                  ],
                 ),
               ),
-              TextSpan(text: verse.text),
-            ],
-          ),
+            ),
+            // 하이라이트된 구절이면 묵상 보기 아이콘 표시
+            if (isHighlighted && widget.onMeditationView != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: InkWell(
+                  onTap: () => widget.onMeditationView?.call(
+                    verse.book,
+                    verse.chapter,
+                    verse.verseNumber,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCE6E26).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      '📄',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFFCE6E26),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -392,57 +442,102 @@ class _BiblePageState extends State<BiblePage> {
   Widget _buildCompareVerseItem(Verse koreanVerse, Verse esvVerse) {
     final isSelected = widget.selectedVerses.contains(koreanVerse.key);
 
+    // 하이라이트 색상 확인
+    final highlightKey = '${koreanVerse.book}-${koreanVerse.chapter}-${koreanVerse.verseNumber}';
+    final highlightColorName = widget.highlightedVerses[highlightKey];
+    final highlightColor = highlightColorName != null
+        ? MeditationColors.getColor(highlightColorName)
+        : null;
+    final isHighlighted = highlightColor != null;
+
     return GestureDetector(
       onTap: () => widget.onVerseToggle(koreanVerse.key),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue.withOpacity(0.15) : Colors.transparent,
+          color: isSelected
+              ? Colors.blue.withOpacity(0.15)
+              : isHighlighted
+              ? highlightColor.withOpacity(0.3)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            RichText(
-              text: TextSpan(
-                style: TextStyle(
-                  fontSize: widget.bodyFontSize,
-                  height: 1.6,
-                  color: Colors.black87,
-                ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextSpan(
-                    text: '${koreanVerse.verseNumber}. ',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.blue,
+                  RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: widget.bodyFontSize,
+                        height: 1.6,
+                        color: Colors.black87,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: '${koreanVerse.verseNumber}. ',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        TextSpan(text: koreanVerse.text),
+                      ],
                     ),
                   ),
-                  TextSpan(text: koreanVerse.text),
+                  const SizedBox(height: 8),
+                  RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: widget.bodyFontSize,
+                        height: 1.6,
+                        color: Colors.black54,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: '${esvVerse.verseNumber}. ',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        TextSpan(text: esvVerse.text),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 8),
-            RichText(
-              text: TextSpan(
-                style: TextStyle(
-                  fontSize: widget.bodyFontSize,
-                  height: 1.6,
-                  color: Colors.black54,
-                ),
-                children: [
-                  TextSpan(
-                    text: '${esvVerse.verseNumber}. ',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.blue,
+            // 하이라이트된 구절이면 묵상 보기 아이콘 표시
+            if (isHighlighted && widget.onMeditationView != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: InkWell(
+                  onTap: () => widget.onMeditationView?.call(
+                    koreanVerse.book,
+                    koreanVerse.chapter,
+                    koreanVerse.verseNumber,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCE6E26).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      '📄',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFFCE6E26),
+                      ),
                     ),
                   ),
-                  TextSpan(text: esvVerse.text),
-                ],
+                ),
               ),
-            ),
           ],
         ),
       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'translation_dialog.dart';
+import '../services/auth_service.dart';
+import '../screens/login_screen.dart';
 
 class SettingsDialog extends StatefulWidget {
   final Translation currentTranslation;
@@ -25,16 +27,17 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late double _titleFontSize;
   late double _bodyFontSize;
   late Translation _selectedTranslation;
+  final AuthService _authService = AuthService();
 
   // 기본값
-  static const double DEFAULT_TITLE_SIZE = 22.0;
-  static const double DEFAULT_BODY_SIZE = 20.0;
+  static const double DEFAULT_TITLE_SIZE = 20.0;
+  static const double DEFAULT_BODY_SIZE = 16.0;
 
   // 범위 수정!
-  static const double MIN_TITLE_SIZE = 18.0;  // 20에서 -2만
-  static const double MAX_TITLE_SIZE = 40.0;  // 32에서 40으로 증가
-  static const double MIN_BODY_SIZE = 14.0;   // 16에서 -2만
-  static const double MAX_BODY_SIZE = 32.0;   // 24에서 32로 증가
+  static const double MIN_TITLE_SIZE = 18.0;
+  static const double MAX_TITLE_SIZE = 40.0;
+  static const double MIN_BODY_SIZE = 14.0;
+  static const double MAX_BODY_SIZE = 32.0;
 
   @override
   void initState() {
@@ -48,7 +51,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     setState(() {
       _titleFontSize = DEFAULT_TITLE_SIZE;
       _bodyFontSize = DEFAULT_BODY_SIZE;
-      _selectedTranslation = Translation.korean;  // 이 줄 추가!
+      _selectedTranslation = Translation.korean;
     });
   }
 
@@ -81,6 +84,47 @@ class _SettingsDialogState extends State<SettingsDialog> {
     widget.onTranslationChanged(_selectedTranslation);
     widget.onFontSizeChanged(_titleFontSize, _bodyFontSize);
     Navigator.pop(context);
+  }
+
+  Future<void> _handleLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('로그아웃'),
+        content: const Text('정말 로그아웃 하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              '로그아웃',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      await _authService.signOut();
+      if (mounted) {
+        Navigator.of(context).pop(); // 설정 다이얼로그 닫기
+        Navigator.of(context).pushReplacementNamed('/login'); // 로그인 화면으로
+      }
+    }
+  }
+
+  void _handleLogin() {
+    Navigator.of(context).pop(); // 설정 다이얼로그 닫기
+
+    // HomeScreen context에서 LoginScreen으로 교체
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+    );
   }
 
   @override
@@ -286,6 +330,49 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // 로그인/로그아웃 버튼
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: _authService.isLoggedIn
+                          ? OutlinedButton(
+                        onPressed: _handleLogout,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          '로그아웃',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                          : ElevatedButton(
+                        onPressed: _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF828282),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          '로그인',
+                          style: TextStyle(
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

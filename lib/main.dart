@@ -1,25 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 import 'services/bible_service.dart';
+import 'services/auth_service.dart';
+import 'services/preferences_service.dart';
+import 'config/firebase_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase 초기화
+  await Firebase.initializeApp(
+    options: FirebaseConfig.firebaseConfig,
+  );
+
+  // PreferencesService 초기화
+  await PreferencesService().init();
+
+  // BibleService 초기화
   await BibleService().initialize();
+
   runApp(const ProclaimApp());
 }
 
 class ProclaimApp extends StatelessWidget {
-  const ProclaimApp({Key? key}) : super(key: key);
+  const ProclaimApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Proclaim',
-      theme: ThemeData(
-        primarySwatch: Colors.orange,
-      ),
-      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primaryColor: const Color(0xFFCE6E26),
+      ),
+      // 로그인 상태에 따라 화면 전환
+      home: StreamBuilder<User?>(
+        stream: AuthService().authStateChanges,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          if (snapshot.hasData) {
+            // 로그인됨 → 홈 화면
+            return const HomeScreen();
+          } else {
+            // 로그인 안 됨 → 로그인 화면
+            return const LoginScreen();
+          }
+        },
+      ),
+      routes: {
+        '/home': (context) => const HomeScreen(),
+        '/login': (context) => const LoginScreen(),
+      },
     );
   }
 }
@@ -57,14 +96,25 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // 3초 후 메인 화면으로 이동
+    // 3초 후 로그인 상태 확인하여 화면 이동
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+        _navigateToNextScreen();
       }
     });
+  }
+
+  void _navigateToNextScreen() {
+    final authService = AuthService();
+
+    // 로그인 상태 확인
+    if (authService.isLoggedIn) {
+      // 이미 로그인되어 있으면 홈 화면으로
+      Navigator.of(context).pushReplacementNamed('/home');
+    } else {
+      // 로그인되어 있지 않으면 로그인 화면으로
+      Navigator.of(context).pushReplacementNamed('/login');
+    }
   }
 
   @override
