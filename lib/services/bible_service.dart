@@ -281,6 +281,31 @@ class BibleService {
     );
   }
 
+  // 같은 날짜에 여러 책이 있을 경우 모두 가져오기
+  List<BibleReading> getAllReadingsForDate(DateTime date, String sheetType) {
+    final monthDay = DateFormat('MM-dd').format(date);
+
+    List<BibleReading>? data;
+    switch (sheetType) {
+      case 'old':
+        data = _oldTestamentData;
+        break;
+      case 'psalms':
+        data = _psalmsData;
+        break;
+      case 'new':
+        data = _newTestamentData;
+        break;
+    }
+
+    if (data == null) return [];
+
+    // 해당 날짜의 모든 읽기 계획 반환
+    final readings = data.where((reading) => reading.date.contains(monthDay)).toList();
+
+    return readings.isEmpty ? [data.first] : readings;
+  }
+
   List<Verse> getVerses(String book, int startChapter, int endChapter, {String? verseRange}) {
     print('getVerses called: book=$book, chapters=$startChapter-$endChapter, verseRange=$verseRange');
 

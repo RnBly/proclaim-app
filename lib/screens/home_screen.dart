@@ -587,24 +587,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     final List<VerseReference> verses = [];
 
     for (var sheetType in ['old', 'psalms', 'new']) {
-      final reading = BibleService().getReadingForDate(_selectedDate, sheetType);
-      if (reading == null) continue;
+      final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
-      final koreanVerses = BibleService().getVerses(
-        reading.book,
-        reading.startChapter,
-        reading.endChapter,
-        verseRange: reading.verseRange,
-      );
+      for (var reading in readings) {
 
-      for (var verse in koreanVerses) {
-        if (_selectedVerses[sheetType]!.contains(verse.key)) {
-          verses.add(VerseReference(
-            book: verse.book,
-            chapter: verse.chapter,
-            verse: verse.verseNumber,
-            text: verse.text,
-          ));
+        final koreanVerses = BibleService().getVerses(
+          reading.book,
+          reading.startChapter,
+          reading.endChapter,
+          verseRange: reading.verseRange,
+        );
+
+        for (var verse in koreanVerses) {
+          if (_selectedVerses[sheetType]!.contains(verse.key)) {
+            verses.add(VerseReference(
+              book: verse.book,
+              chapter: verse.chapter,
+              verse: verse.verseNumber,
+              text: verse.text,
+            ));
+          }
         }
       }
     }
@@ -807,25 +809,27 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     final List<SelectedVerse> allSelected = [];
 
     for (var sheetType in ['old', 'psalms', 'new']) {
-      final reading = BibleService().getReadingForDate(_selectedDate, sheetType);
-      if (reading == null) continue;
+      final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
-      final verses = BibleService().getVerses(
-        reading.book,
-        reading.startChapter,
-        reading.endChapter,
-        verseRange: reading.verseRange,
-      );
+      for (var reading in readings) {
 
-      for (var verse in verses) {
-        if (_selectedVerses[sheetType]!.contains(verse.key)) {
-          allSelected.add(SelectedVerse(
-            book: verse.book,
-            fullName: reading.fullName,
-            chapter: verse.chapter,
-            verseNumber: verse.verseNumber,
-            text: verse.text,
-          ));
+        final verses = BibleService().getVerses(
+          reading.book,
+          reading.startChapter,
+          reading.endChapter,
+          verseRange: reading.verseRange,
+        );
+
+        for (var verse in verses) {
+          if (_selectedVerses[sheetType]!.contains(verse.key)) {
+            allSelected.add(SelectedVerse(
+              book: verse.book,
+              fullName: reading.fullName,
+              chapter: verse.chapter,
+              verseNumber: verse.verseNumber,
+              text: verse.text,
+            ));
+          }
         }
       }
     }
@@ -837,38 +841,40 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     final List<SelectedVerseEsv> allSelected = [];
 
     for (var sheetType in ['old', 'psalms', 'new']) {
-      final reading = BibleService().getReadingForDate(_selectedDate, sheetType);
-      if (reading == null) continue;
+      final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
-      final koreanVerses = BibleService().getVerses(
-        reading.book,
-        reading.startChapter,
-        reading.endChapter,
-        verseRange: reading.verseRange,
-      );
+      for (var reading in readings) {
 
-      final esvVerses = BibleService().getEsvVerses(
-        reading.bookEng,
-        reading.startChapter,
-        reading.endChapter,
-        verseRange: reading.verseRange,
-      );
+        final koreanVerses = BibleService().getVerses(
+          reading.book,
+          reading.startChapter,
+          reading.endChapter,
+          verseRange: reading.verseRange,
+        );
 
-      for (var koreanVerse in koreanVerses) {
-        if (_selectedVerses[sheetType]!.contains(koreanVerse.key)) {
-          final esvVerse = esvVerses.firstWhere(
-                (v) => v.chapter == koreanVerse.chapter && v.verseNumber == koreanVerse.verseNumber,
-            orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
-          );
+        final esvVerses = BibleService().getEsvVerses(
+          reading.bookEng,
+          reading.startChapter,
+          reading.endChapter,
+          verseRange: reading.verseRange,
+        );
 
-          if (esvVerse.text.isNotEmpty) {
-            allSelected.add(SelectedVerseEsv(
-              bookEng: reading.bookEng,
-              fullNameEng: reading.fullNameEng,
-              chapter: esvVerse.chapter,
-              verseNumber: esvVerse.verseNumber,
-              text: esvVerse.text,
-            ));
+        for (var koreanVerse in koreanVerses) {
+          if (_selectedVerses[sheetType]!.contains(koreanVerse.key)) {
+            final esvVerse = esvVerses.firstWhere(
+                  (v) => v.chapter == koreanVerse.chapter && v.verseNumber == koreanVerse.verseNumber,
+              orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
+            );
+
+            if (esvVerse.text.isNotEmpty) {
+              allSelected.add(SelectedVerseEsv(
+                bookEng: reading.bookEng,
+                fullNameEng: reading.fullNameEng,
+                chapter: esvVerse.chapter,
+                verseNumber: esvVerse.verseNumber,
+                text: esvVerse.text,
+              ));
+            }
           }
         }
       }
@@ -881,38 +887,40 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     final List<SelectedVerseCompare> allSelected = [];
 
     for (var sheetType in ['old', 'psalms', 'new']) {
-      final reading = BibleService().getReadingForDate(_selectedDate, sheetType);
-      if (reading == null) continue;
+      final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
-      final koreanVerses = BibleService().getVerses(
-        reading.book,
-        reading.startChapter,
-        reading.endChapter,
-        verseRange: reading.verseRange,
-      );
+      for (var reading in readings) {
 
-      final esvVerses = BibleService().getEsvVerses(
-        reading.bookEng,
-        reading.startChapter,
-        reading.endChapter,
-        verseRange: reading.verseRange,
-      );
+        final koreanVerses = BibleService().getVerses(
+          reading.book,
+          reading.startChapter,
+          reading.endChapter,
+          verseRange: reading.verseRange,
+        );
 
-      for (var koreanVerse in koreanVerses) {
-        if (_selectedVerses[sheetType]!.contains(koreanVerse.key)) {
-          final esvVerse = esvVerses.firstWhere(
-                (v) => v.chapter == koreanVerse.chapter && v.verseNumber == koreanVerse.verseNumber,
-            orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
-          );
+        final esvVerses = BibleService().getEsvVerses(
+          reading.bookEng,
+          reading.startChapter,
+          reading.endChapter,
+          verseRange: reading.verseRange,
+        );
 
-          allSelected.add(SelectedVerseCompare(
-            book: koreanVerse.book,
-            fullName: reading.fullName,
-            chapter: koreanVerse.chapter,
-            verseNumber: koreanVerse.verseNumber,
-            koreanText: koreanVerse.text,
-            englishText: esvVerse.text,
-          ));
+        for (var koreanVerse in koreanVerses) {
+          if (_selectedVerses[sheetType]!.contains(koreanVerse.key)) {
+            final esvVerse = esvVerses.firstWhere(
+                  (v) => v.chapter == koreanVerse.chapter && v.verseNumber == koreanVerse.verseNumber,
+              orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
+            );
+
+            allSelected.add(SelectedVerseCompare(
+              book: koreanVerse.book,
+              fullName: reading.fullName,
+              chapter: koreanVerse.chapter,
+              verseNumber: koreanVerse.verseNumber,
+              koreanText: koreanVerse.text,
+              englishText: esvVerse.text,
+            ));
+          }
         }
       }
     }

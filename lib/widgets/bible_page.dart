@@ -59,11 +59,25 @@ class _BiblePageState extends State<BiblePage> {
     }
   }
 
+  // 시편인지 확인하는 헬퍼 함수
+  bool _isPsalm(String bookName) {
+    return bookName == '시' || bookName == 'Ps';
+  }
+
+  // 장/편 표시 텍스트 생성
+  String _getChapterText(String bookName, int chapter, {bool isEnglish = false}) {
+    if (_isPsalm(bookName)) {
+      return isEnglish ? 'Psalm $chapter' : '$chapter편';
+    }
+    return isEnglish ? 'Chapter $chapter' : '$chapter장';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final reading = BibleService().getReadingForDate(widget.selectedDate, widget.sheetType);
+    // 같은 날짜의 모든 읽기 계획 가져오기
+    final readings = BibleService().getAllReadingsForDate(widget.selectedDate, widget.sheetType);
 
-    if (reading == null) {
+    if (readings.isEmpty) {
       return const Center(child: Text('데이터를 불러올 수 없습니다'));
     }
 
@@ -71,11 +85,11 @@ class _BiblePageState extends State<BiblePage> {
       children: [
         // 메인 콘텐츠
         if (widget.translation == Translation.korean)
-          _buildKoreanView(reading)
+          _buildKoreanView(readings)
         else if (widget.translation == Translation.esv)
-          _buildEsvView(reading)
+          _buildEsvView(readings)
         else
-          _buildCompareView(reading),
+          _buildCompareView(readings),
 
         // 스크롤 진행도 표시 (오른쪽)
         Positioned(
@@ -98,18 +112,18 @@ class _BiblePageState extends State<BiblePage> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final indicatorHeight = constraints.maxHeight * 0.1;
-          final maxTop = constraints.maxHeight - indicatorHeight;
-          final currentTop = maxTop * _scrollProgress;
+          final maxOffset = constraints.maxHeight - indicatorHeight;
+          final currentOffset = maxOffset * _scrollProgress;
 
           return Stack(
             children: [
               Positioned(
-                top: currentTop,
+                top: currentOffset,
                 child: Container(
                   width: 3,
                   height: indicatorHeight,
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.3),
+                    color: Colors.grey.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(1.5),
                   ),
                 ),
@@ -121,426 +135,520 @@ class _BiblePageState extends State<BiblePage> {
     );
   }
 
-  Widget _buildKoreanView(BibleReading reading) {
+  Widget _buildKoreanView(List<BibleReading> readings) {
+    return ListView(
+      controller: _scrollController,
+      padding: const EdgeInsets.all(20),
+      children: [
+        // 각 읽기 계획에 대해 콘텐츠 생성
+        for (var reading in readings) ...[
+          // 각 장별로 분리하여 표시
+          for (int chapter = reading.startChapter; chapter <= reading.endChapter; chapter++) ...[
+            // 책 제목 + 장/편
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: 20,
+                top: chapter == reading.startChapter ? 0 : 30,
+              ),
+              child: Text(
+                '${reading.fullName} ${_getChapterText(reading.book, chapter)}',
+                style: TextStyle(
+                  fontSize: widget.titleFontSize,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+
+            // 해당 장의 구절들
+            ..._buildChapterVerses(reading, chapter),
+          ],
+
+          // 읽기 계획이 여러 개인 경우 구분선 추가
+          if (readings.length > 1 && reading != readings.last)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 30),
+              child: Divider(
+                color: Colors.grey.shade300,
+                thickness: 2,
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+
+  List<Widget> _buildChapterVerses(BibleReading reading, int chapter) {
     final verses = BibleService().getVerses(
       reading.book,
-      reading.startChapter,
-      reading.endChapter,
+      chapter,
+      chapter,
       verseRange: reading.verseRange,
     );
 
-    return ListView.builder(
+    return verses.map((verse) {
+      final key = verse.key;
+      final isSelected = widget.selectedVerses.contains(key);
+      final highlightKey = '${verse.book}-${verse.chapter}-${verse.verseNumber}';
+      final highlightColor = widget.highlightedVerses[highlightKey];
+
+      return GestureDetector(
+        onTap: () => widget.onVerseToggle(key),
+        onLongPress: highlightColor != null
+            ? () => widget.onMeditationView?.call(verse.book, verse.chapter, verse.verseNumber)
+            : null,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Colors.blue.withOpacity(0.1)
+                : (highlightColor != null
+                ? (MeditationColors.getColor(highlightColor) ?? Colors.grey).withOpacity(0.2)
+                : Colors.transparent),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected
+                  ? Colors.blue
+                  : (highlightColor != null
+                  ? (MeditationColors.getColor(highlightColor) ?? Colors.grey)
+                  : Colors.transparent),
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Stack(
+            children: [
+              // 구절 텍스트
+              Padding(
+                padding: highlightColor != null
+                    ? const EdgeInsets.only(right: 30)
+                    : EdgeInsets.zero,
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${verse.verseNumber} ',
+                        style: TextStyle(
+                          fontSize: widget.bodyFontSize - 2,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      TextSpan(
+                        text: verse.text,
+                        style: TextStyle(
+                          fontSize: widget.bodyFontSize,
+                          height: 1.6,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // 묵상 아이콘 (하이라이트된 구절에만 표시)
+              if (highlightColor != null)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: () => widget.onMeditationView?.call(verse.book, verse.chapter, verse.verseNumber),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: Colors.grey.shade300,
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 2,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        '📄',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    }).toList();
+  }
+
+  Widget _buildEsvView(List<BibleReading> readings) {
+    return ListView(
       controller: _scrollController,
-      padding: const EdgeInsets.all(16),
-      itemCount: _getItemCount(verses),
-      itemBuilder: (context, index) {
-        return _buildItem(context, index, verses, reading);
-      },
+      padding: const EdgeInsets.all(20),
+      children: [
+        // 각 읽기 계획에 대해 콘텐츠 생성
+        for (var reading in readings) ...[
+          // 각 장별로 분리하여 표시
+          for (int chapter = reading.startChapter; chapter <= reading.endChapter; chapter++) ...[
+            // 책 제목 + Chapter
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: 20,
+                top: chapter == reading.startChapter ? 0 : 30,
+              ),
+              child: Text(
+                '${reading.fullNameEng} ${_getChapterText(reading.bookEng, chapter, isEnglish: true)}',
+                style: TextStyle(
+                  fontSize: widget.titleFontSize,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+
+            // 해당 장의 구절들
+            ..._buildEsvChapterVerses(reading, chapter),
+          ],
+
+          // 읽기 계획이 여러 개인 경우 구분선 추가
+          if (readings.length > 1 && reading != readings.last)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 30),
+              child: Divider(
+                color: Colors.grey.shade300,
+                thickness: 2,
+              ),
+            ),
+        ],
+      ],
     );
   }
 
-  Widget _buildEsvView(BibleReading reading) {
+  List<Widget> _buildEsvChapterVerses(BibleReading reading, int chapter) {
     final verses = BibleService().getEsvVerses(
       reading.bookEng,
-      reading.startChapter,
-      reading.endChapter,
+      chapter,
+      chapter,
       verseRange: reading.verseRange,
     );
 
     final koreanVerses = BibleService().getVerses(
       reading.book,
-      reading.startChapter,
-      reading.endChapter,
+      chapter,
+      chapter,
       verseRange: reading.verseRange,
     );
 
-    return ListView.builder(
+    return verses.map((verse) {
+      final koreanVerse = koreanVerses.firstWhere(
+            (v) => v.chapter == verse.chapter && v.verseNumber == verse.verseNumber,
+        orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
+      );
+
+      final key = koreanVerse.key;
+      final isSelected = widget.selectedVerses.contains(key);
+      final highlightKey = '${reading.book}-${verse.chapter}-${verse.verseNumber}';
+      final highlightColor = widget.highlightedVerses[highlightKey];
+
+      return GestureDetector(
+        onTap: () => widget.onVerseToggle(key),
+        onLongPress: highlightColor != null
+            ? () => widget.onMeditationView?.call(reading.book, verse.chapter, verse.verseNumber)
+            : null,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Colors.blue.withOpacity(0.1)
+                : (highlightColor != null
+                ? (MeditationColors.getColor(highlightColor) ?? Colors.grey).withOpacity(0.2)
+                : Colors.transparent),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected
+                  ? Colors.blue
+                  : (highlightColor != null
+                  ? (MeditationColors.getColor(highlightColor) ?? Colors.grey)
+                  : Colors.transparent),
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Stack(
+            children: [
+              // 구절 텍스트
+              Padding(
+                padding: highlightColor != null
+                    ? const EdgeInsets.only(right: 30)
+                    : EdgeInsets.zero,
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${verse.verseNumber} ',
+                        style: TextStyle(
+                          fontSize: widget.bodyFontSize - 2,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      TextSpan(
+                        text: verse.text,
+                        style: TextStyle(
+                          fontSize: widget.bodyFontSize,
+                          height: 1.6,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // 묵상 아이콘
+              if (highlightColor != null)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: () => widget.onMeditationView?.call(reading.book, verse.chapter, verse.verseNumber),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: Colors.grey.shade300,
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 2,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        '📄',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    }).toList();
+  }
+
+  Widget _buildCompareView(List<BibleReading> readings) {
+    return ListView(
       controller: _scrollController,
-      padding: const EdgeInsets.all(16),
-      itemCount: _getItemCount(verses),
-      itemBuilder: (context, index) {
-        return _buildItemEsv(context, index, verses, koreanVerses, reading);
-      },
+      padding: const EdgeInsets.all(20),
+      children: [
+        // 각 읽기 계획에 대해 콘텐츠 생성
+        for (var reading in readings) ...[
+          // 각 장별로 분리하여 표시
+          for (int chapter = reading.startChapter; chapter <= reading.endChapter; chapter++) ...[
+            // 책 제목 (한글 + 영문)
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: 8,
+                top: chapter == reading.startChapter ? 0 : 30,
+              ),
+              child: Text(
+                '${reading.fullName} ${_getChapterText(reading.book, chapter)}',
+                style: TextStyle(
+                  fontSize: widget.titleFontSize,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Text(
+                '${reading.fullNameEng} ${_getChapterText(reading.bookEng, chapter, isEnglish: true)}',
+                style: TextStyle(
+                  fontSize: widget.titleFontSize - 2,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+
+            // 해당 장의 구절들
+            ..._buildCompareChapterVerses(reading, chapter),
+          ],
+
+          // 읽기 계획이 여러 개인 경우 구분선 추가
+          if (readings.length > 1 && reading != readings.last)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 30),
+              child: Divider(
+                color: Colors.grey.shade300,
+                thickness: 2,
+              ),
+            ),
+        ],
+      ],
     );
   }
 
-  Widget _buildCompareView(BibleReading reading) {
+  List<Widget> _buildCompareChapterVerses(BibleReading reading, int chapter) {
     final koreanVerses = BibleService().getVerses(
       reading.book,
-      reading.startChapter,
-      reading.endChapter,
+      chapter,
+      chapter,
       verseRange: reading.verseRange,
     );
 
     final esvVerses = BibleService().getEsvVerses(
       reading.bookEng,
-      reading.startChapter,
-      reading.endChapter,
+      chapter,
+      chapter,
       verseRange: reading.verseRange,
     );
 
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.all(16),
-      itemCount: _getCompareItemCount(koreanVerses),
-      itemBuilder: (context, index) {
-        return _buildCompareItem(context, index, koreanVerses, esvVerses, reading);
-      },
-    );
-  }
+    return koreanVerses.map((koreanVerse) {
+      final esvVerse = esvVerses.firstWhere(
+            (v) => v.chapter == koreanVerse.chapter && v.verseNumber == koreanVerse.verseNumber,
+        orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
+      );
 
-  int _getItemCount(List<Verse> verses) {
-    int count = 0;
-    int? lastChapter;
+      final key = koreanVerse.key;
+      final isSelected = widget.selectedVerses.contains(key);
+      final highlightKey = '${koreanVerse.book}-${koreanVerse.chapter}-${koreanVerse.verseNumber}';
+      final highlightColor = widget.highlightedVerses[highlightKey];
 
-    for (var verse in verses) {
-      if (lastChapter != verse.chapter) {
-        count++;
-        lastChapter = verse.chapter;
-      }
-      count++;
-    }
-
-    return count;
-  }
-
-  int _getCompareItemCount(List<Verse> verses) {
-    int count = 0;
-    int? lastChapter;
-
-    for (var verse in verses) {
-      if (lastChapter != verse.chapter) {
-        count++;
-        lastChapter = verse.chapter;
-      }
-      count++;
-    }
-
-    return count;
-  }
-
-  Widget _buildItem(BuildContext context, int index, List<Verse> verses, BibleReading reading) {
-    int currentIndex = 0;
-    int? lastChapter;
-
-    for (var verse in verses) {
-      if (lastChapter != verse.chapter) {
-        if (currentIndex == index) {
-          lastChapter = verse.chapter;
-          return _buildChapterHeader(reading.fullName, verse.chapter, false);
-        }
-        currentIndex++;
-        lastChapter = verse.chapter;
-      }
-
-      if (currentIndex == index) {
-        return _buildVerseItem(verse, verse.key);
-      }
-      currentIndex++;
-    }
-
-    return const SizedBox.shrink();
-  }
-
-  Widget _buildItemEsv(BuildContext context, int index, List<Verse> esvVerses, List<Verse> koreanVerses, BibleReading reading) {
-    int currentIndex = 0;
-    int? lastChapter;
-
-    for (int i = 0; i < esvVerses.length; i++) {
-      final esvVerse = esvVerses[i];
-
-      if (lastChapter != esvVerse.chapter) {
-        if (currentIndex == index) {
-          lastChapter = esvVerse.chapter;
-          return _buildChapterHeader(reading.fullNameEng, esvVerse.chapter, true);
-        }
-        currentIndex++;
-        lastChapter = esvVerse.chapter;
-      }
-
-      if (currentIndex == index) {
-        final koreanVerse = koreanVerses.firstWhere(
-              (v) => v.chapter == esvVerse.chapter && v.verseNumber == esvVerse.verseNumber,
-          orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
-        );
-        return _buildVerseItem(esvVerse, koreanVerse.key);
-      }
-      currentIndex++;
-    }
-
-    return const SizedBox.shrink();
-  }
-
-  Widget _buildCompareItem(BuildContext context, int index, List<Verse> koreanVerses, List<Verse> esvVerses, BibleReading reading) {
-    int currentIndex = 0;
-    int? lastChapter;
-
-    for (int i = 0; i < koreanVerses.length; i++) {
-      final koreanVerse = koreanVerses[i];
-
-      if (lastChapter != koreanVerse.chapter) {
-        if (currentIndex == index) {
-          lastChapter = koreanVerse.chapter;
-          return _buildCompareChapterHeader(
-            reading.fullName,
-            reading.fullNameEng,
-            koreanVerse.chapter,
-          );
-        }
-        currentIndex++;
-        lastChapter = koreanVerse.chapter;
-      }
-
-      if (currentIndex == index) {
-        final esvVerse = esvVerses.firstWhere(
-              (v) => v.chapter == koreanVerse.chapter && v.verseNumber == koreanVerse.verseNumber,
-          orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
-        );
-        return _buildCompareVerseItem(koreanVerse, esvVerse);
-      }
-      currentIndex++;
-    }
-
-    return const SizedBox.shrink();
-  }
-
-  Widget _buildChapterHeader(String fullName, int chapter, bool isEsv) {
-    final isPsalms = fullName.contains('시편') || fullName.toLowerCase().contains('psalm');
-    final chapterLabel = isPsalms ? '편' : '장';
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 24, bottom: 16),
-      child: Text(
-        isEsv
-            ? '$fullName $chapter (ESV)'
-            : isPsalms
-            ? '시편 $chapter$chapterLabel(개역개정)'
-            : '$fullName $chapter$chapterLabel(개역개정)',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: widget.titleFontSize,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompareChapterHeader(String koreanName, String englishName, int chapter) {
-    final isPsalms = koreanName.contains('시편') || englishName.toLowerCase().contains('psalm');
-    final chapterLabel = isPsalms ? '편' : '장';
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 24, bottom: 16),
-      child: Column(
-        children: [
-          Text(
-            isPsalms
-                ? '시편 $chapter$chapterLabel(개역개정)'
-                : '$koreanName $chapter$chapterLabel(개역개정)',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: widget.titleFontSize,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+      return GestureDetector(
+        onTap: () => widget.onVerseToggle(key),
+        onLongPress: highlightColor != null
+            ? () => widget.onMeditationView?.call(koreanVerse.book, koreanVerse.chapter, koreanVerse.verseNumber)
+            : null,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Colors.blue.withOpacity(0.1)
+                : (highlightColor != null
+                ? (MeditationColors.getColor(highlightColor) ?? Colors.grey).withOpacity(0.2)
+                : Colors.transparent),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected
+                  ? Colors.blue
+                  : (highlightColor != null
+                  ? (MeditationColors.getColor(highlightColor) ?? Colors.grey)
+                  : Colors.transparent),
+              width: isSelected ? 2 : 1,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            '$englishName $chapter (ESV)',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: widget.titleFontSize * 0.8,
-              color: Colors.black54,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVerseItem(Verse verse, String keyToUse) {
-    final isSelected = widget.selectedVerses.contains(keyToUse);
-
-    // 하이라이트 색상 확인
-    final highlightKey = '${verse.book}-${verse.chapter}-${verse.verseNumber}';
-    final highlightColorName = widget.highlightedVerses[highlightKey];
-    final highlightColor = highlightColorName != null
-        ? MeditationColors.getColor(highlightColorName)
-        : null;
-    final isHighlighted = highlightColor != null;
-
-    return GestureDetector(
-      onTap: () => widget.onVerseToggle(keyToUse),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? Colors.blue.withOpacity(0.15)
-              : isHighlighted
-              ? highlightColor.withOpacity(0.3)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: RichText(
-                text: TextSpan(
-                  style: TextStyle(
-                    fontSize: widget.bodyFontSize,
-                    height: 1.6,
-                    color: Colors.black87,
-                  ),
+          child: Stack(
+            children: [
+              // 구절 내용
+              Padding(
+                padding: highlightColor != null
+                    ? const EdgeInsets.only(right: 30)
+                    : EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextSpan(
-                      text: '${verse.verseNumber}. ',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.blue,
+                    // 한글 구절
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '${koreanVerse.verseNumber} ',
+                            style: TextStyle(
+                              fontSize: widget.bodyFontSize - 2,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          TextSpan(
+                            text: koreanVerse.text,
+                            style: TextStyle(
+                              fontSize: widget.bodyFontSize,
+                              height: 1.6,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    TextSpan(text: verse.text),
+                    if (esvVerse.text.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      const Divider(height: 1),
+                      const SizedBox(height: 8),
+                      // 영문 구절
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '${esvVerse.verseNumber} ',
+                              style: TextStyle(
+                                fontSize: widget.bodyFontSize - 2,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            TextSpan(
+                              text: esvVerse.text,
+                              style: TextStyle(
+                                fontSize: widget.bodyFontSize - 1,
+                                height: 1.6,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
-            ),
-            // 하이라이트된 구절이면 묵상 보기 아이콘 표시
-            if (isHighlighted && widget.onMeditationView != null)
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: InkWell(
-                  onTap: () => widget.onMeditationView?.call(
-                    verse.book,
-                    verse.chapter,
-                    verse.verseNumber,
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFCE6E26).withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Text(
-                      '📄',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFFCE6E26),
+              // 묵상 아이콘
+              if (highlightColor != null)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: () => widget.onMeditationView?.call(koreanVerse.book, koreanVerse.chapter, koreanVerse.verseNumber),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: Colors.grey.shade300,
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 2,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        '📄',
+                        style: TextStyle(fontSize: 16),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildCompareVerseItem(Verse koreanVerse, Verse esvVerse) {
-    final isSelected = widget.selectedVerses.contains(koreanVerse.key);
-
-    // 하이라이트 색상 확인
-    final highlightKey = '${koreanVerse.book}-${koreanVerse.chapter}-${koreanVerse.verseNumber}';
-    final highlightColorName = widget.highlightedVerses[highlightKey];
-    final highlightColor = highlightColorName != null
-        ? MeditationColors.getColor(highlightColorName)
-        : null;
-    final isHighlighted = highlightColor != null;
-
-    return GestureDetector(
-      onTap: () => widget.onVerseToggle(koreanVerse.key),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? Colors.blue.withOpacity(0.15)
-              : isHighlighted
-              ? highlightColor.withOpacity(0.3)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      style: TextStyle(
-                        fontSize: widget.bodyFontSize,
-                        height: 1.6,
-                        color: Colors.black87,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: '${koreanVerse.verseNumber}. ',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.blue,
-                          ),
-                        ),
-                        TextSpan(text: koreanVerse.text),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  RichText(
-                    text: TextSpan(
-                      style: TextStyle(
-                        fontSize: widget.bodyFontSize,
-                        height: 1.6,
-                        color: Colors.black54,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: '${esvVerse.verseNumber}. ',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.blue,
-                          ),
-                        ),
-                        TextSpan(text: esvVerse.text),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // 하이라이트된 구절이면 묵상 보기 아이콘 표시
-            if (isHighlighted && widget.onMeditationView != null)
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: InkWell(
-                  onTap: () => widget.onMeditationView?.call(
-                    koreanVerse.book,
-                    koreanVerse.chapter,
-                    koreanVerse.verseNumber,
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFCE6E26).withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Text(
-                      '📄',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFFCE6E26),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
+      );
+    }).toList();
   }
 }
