@@ -365,6 +365,96 @@ class BibleService {
     return data.first;
   }
 
+  // 특정 날짜의 모든 읽기 자료를 반환 (같은 날짜에 여러 책이 있을 수 있음)
+  List<BibleReading> getAllReadingsForDate(DateTime date, String sheetType) {
+    final monthDay = DateFormat('MM-dd').format(date);
+    final fullDate = DateFormat('yyyy-MM-dd').format(date);
+
+    List<BibleReading>? data;
+    switch (sheetType) {
+      case 'old':
+        data = _oldTestamentData;
+        break;
+      case 'psalms':
+        data = _psalmsData;
+        break;
+      case 'new':
+        data = _newTestamentData;
+        break;
+    }
+
+    if (data == null || data.isEmpty) {
+      print('⚠️ No data available for sheet type: $sheetType');
+      return [];
+    }
+
+    final List<BibleReading> results = [];
+
+    // 여러 형식으로 날짜 매칭 시도 - 모든 매칭 항목 수집
+    
+    // 1. 정확한 전체 날짜 매칭
+    for (var reading in data) {
+      if (reading.date == fullDate) {
+        results.add(reading);
+      }
+    }
+    
+    if (results.isNotEmpty) {
+      print('✓ Found ${results.length} exact matches for $fullDate');
+      return results;
+    }
+
+    // 2. MM-dd 형식 contains 매칭
+    for (var reading in data) {
+      if (reading.date.contains(monthDay)) {
+        results.add(reading);
+      }
+    }
+    
+    if (results.isNotEmpty) {
+      print('✓ Found ${results.length} contains matches for $monthDay');
+      return results;
+    }
+
+    // 3. 날짜 파싱 후 비교
+    for (var reading in data) {
+      try {
+        DateTime? readingDate;
+        
+        if (reading.date.contains('-')) {
+          final parts = reading.date.split(' ')[0];
+          readingDate = DateTime.tryParse(parts);
+        } else if (reading.date.contains('.')) {
+          final parts = reading.date.split('.');
+          if (parts.length >= 2) {
+            final month = int.tryParse(parts[0]);
+            final day = int.tryParse(parts[1]);
+            if (month != null && day != null) {
+              readingDate = DateTime(date.year, month, day);
+            }
+          }
+        }
+
+        if (readingDate != null && 
+            readingDate.year == date.year &&
+            readingDate.month == date.month &&
+            readingDate.day == date.day) {
+          results.add(reading);
+        }
+      } catch (e) {
+        // 파싱 실패는 무시하고 계속
+      }
+    }
+
+    if (results.isNotEmpty) {
+      print('✓ Found ${results.length} parsed matches');
+      return results;
+    }
+
+    print('❌ No matches found! Returning empty list');
+    return [];
+  }
+
   List<Verse> getVerses(String book, int startChapter, int endChapter, {String? verseRange}) {
     print('getVerses called: book=$book, chapters=$startChapter-$endChapter, verseRange=$verseRange');
 
