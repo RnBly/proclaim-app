@@ -31875,8 +31875,8 @@
             "18": "I, Paul, write this greeting with my own hand. Remember my chains. Grace be with you."
         }
     },
-    "Th": {
-        "11": {
+    "1Th": {
+        "1": {
             "1": "Paul, Silvanus, and Timothy,To the church of the Thessalonians in God the Father and the Lord Jesus Christ:Grace to you and peace.",
             "2": "We give thanks to God always for all of you, constantly mentioning you in our prayers,",
             "3": "remembering before our God and Father your work of faith and labor of love and steadfastness of hope in our Lord Jesus Christ.",
@@ -31888,7 +31888,7 @@
             "9": "For they themselves report concerning us the kind of reception we had among you, and how you turned to God from idols to serve the living and true God,",
             "10": "and to wait for his Son from heaven, whom he raised from the dead, Jesus who delivers us from the wrath to come."
         },
-        "12": {
+        "2": {
             "1": "For you yourselves know, brothers, that our coming to you was not in vain.",
             "2": "But though we had already suffered and been shamefully treated at Philippi, as you know, we had boldness in our God to declare to you the gospel of God in the midst of much conflict.",
             "3": "For our appeal does not spring from error or impurity or any attempt to deceive,",
@@ -31910,7 +31910,7 @@
             "19": "For what is our hope or joy or crown of boasting before our Lord Jesus at his coming? Is it not you?",
             "20": "For you are our glory and joy."
         },
-        "13": {
+        "3": {
             "1": "Therefore when we could bear it no longer, we were willing to be left behind at Athens alone,",
             "2": "and we sent Timothy, our brother and God's coworker in the gospel of Christ, to establish and exhort you in your faith,",
             "3": "that no one be moved by these afflictions. For you yourselves know that we are destined for this.",
@@ -31925,7 +31925,7 @@
             "12": "and may the Lord make you increase and abound in love for one another and for all, as we do for you,",
             "13": "so that he may establish your hearts blameless in holiness before our God and Father, at the coming of our Lord Jesus with all his saints."
         },
-        "14": {
+        "4": {
             "1": "Finally, then, brothers, we ask and urge you in the Lord Jesus, that as you received from us how you ought to live and to please God, just as you are doing, that you do so more and more.",
             "2": "For you know what instructions we gave you through the Lord Jesus.",
             "3": "For this is the will of God, your sanctification: that you abstain from sexual immorality;",
@@ -31945,7 +31945,7 @@
             "17": "Then we who are alive, who are left, will be caught up together with them in the clouds to meet the Lord in the air, and so we will always be with the Lord.",
             "18": "Therefore encourage one another with these words."
         },
-        "15": {
+        "5": {
             "1": "Now concerning the times and the seasons, brothers, you have no need to have anything written to you.",
             "2": "For you yourselves are fully aware that the day of the Lord will come like a thief in the night.",
             "3": "While people are saying, \\\"There is peace and security,\\\" then sudden destruction will come upon them as labor pains come upon a pregnant woman, and they will not escape.",
@@ -31974,8 +31974,10 @@
             "26": "Greet all the brothers with a holy kiss.",
             "27": "I put you under oath before the Lord to have this letter read to all the brothers.",
             "28": "The grace of our Lord Jesus Christ be with you."
-        },
-        "21": {
+        }
+    },
+    "2Th": {
+        "1": {
             "1": "Paul, Silvanus, and Timothy,To the church of the Thessalonians in God our Father and the Lord Jesus Christ:",
             "2": "Grace to you and peace from God our Father and the Lord Jesus Christ.",
             "3": "We ought always to give thanks to God for you, brothers, as is right, because your faith is growing abundantly, and the love of every one of you for one another is increasing.",
@@ -31989,7 +31991,7 @@
             "11": "To this end we always pray for you, that our God may make you worthy of his calling and may fulfill every resolve for good and every work of faith by his power,",
             "12": "so that the name of our Lord Jesus may be glorified in you, and you in him, according to the grace of our God and the Lord Jesus Christ."
         },
-        "22": {
+        "2": {
             "1": "Now concerning the coming of our Lord Jesus Christ and our being gathered together to him, we ask you, brothers,",
             "2": "not to be quickly shaken in mind or alarmed, either by a spirit or a spoken word, or a letter seeming to be from us, to the effect that the day of the Lord has come.",
             "3": "Let no one deceive you in any way. For that day will not come, unless the rebellion comes first, and the man of lawlessness is revealed, the son of destruction,",
@@ -32008,7 +32010,7 @@
             "16": "Now may our Lord Jesus Christ himself, and God our Father, who loved us and gave us eternal comfort and good hope through grace,",
             "17": "comfort your hearts and establish them in every good work and word."
         },
-        "23": {
+        "3": {
             "1": "Finally, brothers, pray for us, that the word of the Lord may speed ahead and be honored, as happened among you,",
             "2": "and that we may be delivered from wicked and evil men. For not all have faith.",
             "3": "But the Lord is faithful. He will establish you and guard you against the evil one.",
