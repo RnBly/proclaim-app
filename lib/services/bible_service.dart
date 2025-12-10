@@ -106,6 +106,12 @@ class BibleService {
           'Full Name(ENG)': row[6],
           'Verse': row.length > 7 ? row[7] : null,
         };
+        
+        // 처음 5개와 마지막 부분의 날짜 형식 로그
+        if (i <= 5 || i >= lines.length - 5) {
+          print('  CSV Row $i Date: "${row[0]}"');
+        }
+        
         readings.add(BibleReading.fromMap(map));
       } catch (e) {
         print('⚠️ Error parsing row $i: $e');
@@ -256,11 +262,19 @@ class BibleService {
 
   BibleReading? getTodayReading(String sheetType) {
     final now = DateTime.now();
-    return getReadingForDate(now, sheetType);
+    print('📖 getTodayReading called: date=${now.year}-${now.month}-${now.day}, sheetType=$sheetType');
+    final reading = getReadingForDate(now, sheetType);
+    if (reading != null) {
+      print('   ✓ Found reading: ${reading.book}(${reading.bookEng}) ${reading.startChapter}-${reading.endChapter}');
+    } else {
+      print('   ❌ No reading found!');
+    }
+    return reading;
   }
 
   BibleReading? getReadingForDate(DateTime date, String sheetType) {
     final monthDay = DateFormat('MM-dd').format(date);
+    final fullDate = DateFormat('yyyy-MM-dd').format(date);
 
     List<BibleReading>? data;
     switch (sheetType) {
@@ -275,35 +289,80 @@ class BibleService {
         break;
     }
 
-    return data?.firstWhere(
-          (reading) => reading.date.contains(monthDay),
-      orElse: () => data!.first,
+    if (data == null || data.isEmpty) {
+      print('⚠️ No data available for sheet type: $sheetType');
+      return null;
+    }
+
+    // 디버그: 처음 5개와 마지막 5개 날짜 출력
+    print('🔍 Searching for date: $fullDate (MM-dd: $monthDay) in $sheetType');
+    print('   First 5 dates: ${data.take(5).map((r) => r.date).join(", ")}');
+    if (data.length > 5) {
+      print('   Last 5 dates: ${data.skip(data.length - 5).map((r) => r.date).join(", ")}');
+    }
+
+    // 여러 형식으로 날짜 매칭 시도
+    BibleReading? result;
+    
+    // 1. 정확한 전체 날짜 매칭
+    result = data.cast<BibleReading?>().firstWhere(
+      (reading) => reading?.date == fullDate,
+      orElse: () => null,
     );
-  }
-
-  // 같은 날짜에 여러 책이 있을 경우 모두 가져오기
-  List<BibleReading> getAllReadingsForDate(DateTime date, String sheetType) {
-    final monthDay = DateFormat('MM-dd').format(date);
-
-    List<BibleReading>? data;
-    switch (sheetType) {
-      case 'old':
-        data = _oldTestamentData;
-        break;
-      case 'psalms':
-        data = _psalmsData;
-        break;
-      case 'new':
-        data = _newTestamentData;
-        break;
+    
+    if (result != null) {
+      print('✓ Found exact match: ${result.date}');
+      return result;
     }
 
-    if (data == null) return [];
+    // 2. MM-dd 형식 contains 매칭
+    result = data.cast<BibleReading?>().firstWhere(
+      (reading) => reading?.date.contains(monthDay) ?? false,
+      orElse: () => null,
+    );
+    
+    if (result != null) {
+      print('✓ Found contains match: ${result.date}');
+      return result;
+    }
 
-    // 해당 날짜의 모든 읽기 계획 반환
-    final readings = data.where((reading) => reading.date.contains(monthDay)).toList();
+    // 3. 날짜 파싱 후 비교
+    for (var reading in data) {
+      try {
+        // 다양한 형식 시도
+        DateTime? readingDate;
+        
+        // "yyyy-MM-dd" 형식
+        if (reading.date.contains('-')) {
+          final parts = reading.date.split(' ')[0]; // 시간 부분 제거
+          readingDate = DateTime.tryParse(parts);
+        }
+        // "MM.dd" 형식
+        else if (reading.date.contains('.')) {
+          final parts = reading.date.split('.');
+          if (parts.length >= 2) {
+            final month = int.tryParse(parts[0]);
+            final day = int.tryParse(parts[1]);
+            if (month != null && day != null) {
+              readingDate = DateTime(date.year, month, day);
+            }
+          }
+        }
 
-    return readings.isEmpty ? [data.first] : readings;
+        if (readingDate != null && 
+            readingDate.year == date.year &&
+            readingDate.month == date.month &&
+            readingDate.day == date.day) {
+          print('✓ Found parsed match: ${reading.date}');
+          return reading;
+        }
+      } catch (e) {
+        // 파싱 실패는 무시하고 계속
+      }
+    }
+
+    print('❌ No match found! Returning first item as fallback');
+    return data.first;
   }
 
   List<Verse> getVerses(String book, int startChapter, int endChapter, {String? verseRange}) {
@@ -393,11 +452,27 @@ class BibleService {
   }
 
   List<Verse> getEsvVerses(String bookEng, int startChapter, int endChapter, {String? verseRange}) {
+    print('getEsvVerses called: bookEng=$bookEng, chapters=$startChapter-$endChapter, verseRange=$verseRange');
+    
+    // Book(ENG) 값 정리 (공백, 탭 제거)
+    String cleanedBook = bookEng.trim();
+    print('  Cleaned bookEng: "$bookEng" → "$cleanedBook"');
+    
     final List<Verse> verses = [];
 
-    if (_bibleEsvData == null || _bibleEsvData![bookEng] == null) return verses;
+    if (_bibleEsvData == null) {
+      print('  ❌ ESV data not loaded');
+      return verses;
+    }
+    
+    if (_bibleEsvData![cleanedBook] == null) {
+      print('  ❌ Book not found in ESV data: $cleanedBook');
+      print('  Available keys sample: ${_bibleEsvData!.keys.take(10).join(", ")}');
+      return verses;
+    }
 
-    final bookData = _bibleEsvData![bookEng] as Map<String, dynamic>;
+    final bookData = _bibleEsvData![cleanedBook] as Map<String, dynamic>;
+    print('  ✓ Found book with ${bookData.length} chapters');
 
     int? startVerse;
     int? endVerse;
@@ -409,7 +484,11 @@ class BibleService {
 
     for (int chapter = startChapter; chapter <= endChapter; chapter++) {
       final chapterKey = chapter.toString();
-      if (bookData[chapterKey] == null) continue;
+      
+      if (bookData[chapterKey] == null) {
+        print('  ⚠️ Chapter not found: $chapterKey');
+        continue;
+      }
 
       final chapterData = bookData[chapterKey] as Map<String, dynamic>;
 
@@ -427,7 +506,7 @@ class BibleService {
             }
 
             verses.add(Verse(
-              book: bookEng,
+              book: cleanedBook,
               chapter: chapter,
               verseNumber: verseStart,
               text: verseText.toString(),
@@ -438,7 +517,7 @@ class BibleService {
                 if (v < startVerse || v > endVerse) continue;
               }
               verses.add(Verse(
-                book: bookEng,
+                book: cleanedBook,
                 chapter: chapter,
                 verseNumber: v,
                 text: '(Included in verse $verseStart)',
@@ -454,14 +533,14 @@ class BibleService {
             }
 
             verses.add(Verse(
-              book: bookEng,
+              book: cleanedBook,
               chapter: chapter,
               verseNumber: verseNum,
               text: verseText.toString(),
             ));
           }
         } catch (e) {
-          print('Error parsing verse $bookEng $chapter:$verseKey - $e');
+          print('Error parsing verse $cleanedBook $chapter:$verseKey - $e');
         }
       });
     }
@@ -473,6 +552,7 @@ class BibleService {
       return a.verseNumber.compareTo(b.verseNumber);
     });
 
+    print('  ✓ Found ${verses.length} verses');
     return verses;
   }
 
