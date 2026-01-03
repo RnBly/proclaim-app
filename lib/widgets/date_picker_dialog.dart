@@ -1,3 +1,15 @@
+/**
+ * date_picker_dialog.dart
+ * 
+ * 날짜 선택 다이얼로그
+ * 
+ * 기능:
+ * - 월(1-12) 선택 드롭다운
+ * - 일(1-31) 선택 드롭다운
+ * - 선택한 날짜를 콜백으로 반환
+ * - 유효하지 않은 날짜 처리 (예: 2월 31일)
+ */
+
 import 'package:flutter/material.dart';
 
 class DatePickerDialog extends StatefulWidget {

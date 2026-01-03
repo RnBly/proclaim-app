@@ -1,3 +1,15 @@
+/**
+ * translation_dialog.dart
+ * 
+ * 성경 역본 선택 다이얼로그
+ * 
+ * 기능:
+ * - 한글 (개역개정)
+ * - English (ESV)
+ * - 비교 (한글 + English)
+ * - 선택한 역본을 PreferencesService에 저장
+ */
+
 import 'package:flutter/material.dart';
 
 enum Translation {

@@ -1,3 +1,14 @@
+/**
+ * copy_dialog.dart
+ * 
+ * 선택된 성경 구절을 클립보드에 복사하는 다이얼로그
+ * 
+ * 기능:
+ * - 선택된 구절을 포맷팅하여 표시
+ * - "복사하기" 버튼 클릭 시 클립보드에 복사
+ * - 복사 완료 시 스낵바로 알림
+ */
+
 import 'package:flutter/material.dart';
 
 enum CopyFormat {

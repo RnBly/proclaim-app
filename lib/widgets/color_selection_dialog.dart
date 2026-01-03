@@ -1,3 +1,13 @@
+/**
+ * color_selection_dialog.dart
+ * 
+ * 묵상 하이라이트 색상 선택 다이얼로그
+ * 
+ * 기능:
+ * - 5가지 파스텔 톤 색상 선택 (노란색, 파란색, 붉은색, 녹색, 주황색)
+ * - 선택한 색상을 콜백으로 반환
+ */
+
 import 'package:flutter/material.dart';
 import '../config/meditation_colors.dart';
 

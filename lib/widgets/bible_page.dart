@@ -1,3 +1,22 @@
+/**
+ * bible_page.dart
+ * 
+ * 성경 본문을 표시하는 페이지
+ * 
+ * 주요 기능:
+ * - 한글/영어/비교 모드 지원
+ * - 절 선택 기능 (탭하여 선택/해제)
+ * - 선택된 절 복사 (CopyDialog)
+ * - 묵상 작성 (MeditationWritingDialog)
+ * - 폰트 크기 조절 (설정에서)
+ * - 구절 하이라이트 (묵상이 있는 경우)
+ * 
+ * UI 구성:
+ * - AppBar: 제목, 역본 전환 버튼
+ * - Body: 성경 본문 (ScrollView)
+ * - BottomSheet: 선택된 절이 있을 때 표시
+ */
+
 import 'package:flutter/material.dart';
 import '../services/bible_service.dart';
 import '../models/bible_reading.dart';

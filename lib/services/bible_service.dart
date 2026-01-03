@@ -1,3 +1,24 @@
+/**
+ * bible_service.dart
+ * 
+ * 성경 데이터 로딩 및 관리를 담당하는 핵심 서비스
+ * 
+ * 주요 역할:
+ * 1. 맥체인 성경읽기표 로딩 (Google Sheets → Excel 백업)
+ * 2. 성경 본문 로딩 (GitHub JSON → Assets 백업)
+ * 3. 날짜별 읽기 계획 조회
+ * 4. 성경 본문 조회 (한글/영어/비교)
+ * 5. 선택된 구절 포맷팅 (복사 기능용)
+ * 
+ * 데이터 소스 우선순위:
+ * - 읽기 계획: Google Sheets (1순위) → Excel Assets (2순위)
+ * - 성경 본문: GitHub Raw (1순위) → Assets (2순위)
+ * 
+ * 캐싱: GitHub JSON 파일은 24시간 캐시
+ * 
+ * 디자인 패턴: Singleton 패턴
+ */
+
 // lib/services/bible_service.dart
 
 import 'dart:convert';

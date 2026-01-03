@@ -1,3 +1,15 @@
+/**
+ * settings_dialog.dart
+ * 
+ * 앱 설정 다이얼로그
+ * 
+ * 기능:
+ * - 제목 폰트 크기 조절 (슬라이더)
+ * - 본문 폰트 크기 조절 (슬라이더)
+ * - 설정 초기화 버튼
+ * - 변경사항 자동 저장 (PreferencesService)
+ */
+
 import 'package:flutter/material.dart';
 import 'translation_dialog.dart';
 import '../services/auth_service.dart';

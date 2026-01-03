@@ -1,3 +1,15 @@
+/**
+ * verse_selection_dialog.dart
+ * 
+ * 구절 범위 선택 다이얼로그
+ * 
+ * 기능:
+ * - 시작 절 선택
+ * - 끝 절 선택
+ * - 선택한 범위의 구절들을 반환
+ * - 유효성 검증 (시작 <= 끝)
+ */
+
 import 'package:flutter/material.dart';
 import '../models/meditation.dart';
 

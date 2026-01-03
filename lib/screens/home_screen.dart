@@ -1,3 +1,23 @@
+/**
+ * home_screen.dart
+ * 
+ * 앱의 메인 화면
+ * 
+ * 주요 기능:
+ * - 오늘 날짜의 성경 읽기 계획 표시 (구약, 시편, 신약)
+ * - 각 읽기 계획 클릭 시 BiblePage로 이동
+ * - 날짜 선택 버튼 (DatePickerDialog)
+ * - 역본 선택 버튼 (TranslationDialog)
+ * - 설정 버튼 (SettingsDialog)
+ * - 묵상 작성 버튼 (MeditationWritingDialog)
+ * - 로그아웃 버튼
+ * 
+ * 데이터 흐름:
+ * - BibleService에서 오늘 날짜의 읽기 계획 조회
+ * - PreferencesService에서 폰트 크기 및 역본 설정 조회
+ * - 설정 변경 시 화면 새로고침
+ */
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/bible_service.dart';

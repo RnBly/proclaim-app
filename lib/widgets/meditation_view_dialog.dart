@@ -1,3 +1,15 @@
+/**
+ * meditation_view_dialog.dart
+ * 
+ * 저장된 묵상을 보여주는 다이얼로그
+ * 
+ * 기능:
+ * - 묵상 내용 표시
+ * - 관련 성경 구절 표시 (하이라이트 포함)
+ * - 생성/수정 시간 표시
+ * - 묵상 삭제 버튼
+ */
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';

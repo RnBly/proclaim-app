@@ -1,3 +1,15 @@
+/**
+ * meditation_writing_dialog.dart
+ * 
+ * 묵상을 작성하는 다이얼로그
+ * 
+ * 기능:
+ * - 선택된 구절 표시
+ * - 하이라이트 색상 선택
+ * - 묵상 내용 입력 (TextField)
+ * - Firestore에 저장
+ */
+
 import 'package:flutter/material.dart';
 import '../models/meditation.dart';
 
