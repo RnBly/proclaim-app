@@ -14931,7 +14931,7 @@
             "17": "And Job died, an old man, and full of days."
         }
     },
-    "Psa": {
+    "Ps": {
         "1": {
             "1": "Blessed is the man who walks not in the counsel of the wicked, nor stands in the way of sinners, nor sits in the seat of scoffers;",
             "2": "but his delight is in the law of the LORD, and on his law he meditates day and night.",
@@ -18921,7 +18921,7 @@
             "14": "For God will bring every deed into judgment, with every secret thing, whether good or evil."
         }
     },
-    "Sos": {
+    "Sng": {
         "1": {
             "1": "The Song of Songs, which is Solomon's.",
             "2": "Let him kiss me with the kisses of his mouth! For your love is better than wine;",
@@ -30576,8 +30576,8 @@
             "27": "to the only wise God be glory forevermore through Jesus Christ! Amen."
         }
     },
-    "Co": {
-        "11": {
+    "1Co": {
+        "1": {
             "1": "Paul, called by the will of God to be an apostle of Christ Jesus, and our brother Sosthenes,",
             "2": "To the church of God that is in Corinth, to those sanctified in Christ Jesus, called to be saints together with all those who in every place call upon the name of our Lord Jesus Christ, both their Lord and ours:",
             "3": "Grace to you and peace from God our Father and the Lord Jesus Christ.",
@@ -30610,7 +30610,7 @@
             "30": "He is the source of your life in Christ Jesus, whom God made our wisdom and our righteousness and sanctification and redemption.",
             "31": "Therefore, as it is written, \\\"Let the one who boasts, boast in the Lord.\\\""
         },
-        "12": {
+        "2": {
             "1": "And I, when I came to you, brothers, did not come proclaiming to you the testimony of God with lofty speech or wisdom.",
             "2": "For I decided to know nothing among you except Jesus Christ and him crucified.",
             "3": "And I was with you in weakness and in fear and much trembling,",
@@ -30628,7 +30628,7 @@
             "15": "The spiritual person judges all things, but is himself to be judged by no one.",
             "16": "\\\"For who has understood the mind of the Lord so as to instruct him?\\\" But we have the mind of Christ."
         },
-        "13": {
+        "3": {
             "1": "But I, brothers, could not address you as spiritual people, but as people of the flesh, as infants in Christ.",
             "2": "I fed you with milk, not solid food, for you were not ready for it. And even now you are not yet ready,",
             "3": "for you are still of the flesh. For while there is jealousy and strife among you, are you not of the flesh and behaving only in a human way?",
@@ -30653,7 +30653,7 @@
             "22": "whether Paul or Apollos or Cephas or the world or life or death or the present or the future--all are yours,",
             "23": "and you are Christ's, and Christ is God's."
         },
-        "14": {
+        "4": {
             "1": "This is how one should regard us, as servants of Christ and stewards of the mysteries of God.",
             "2": "Moreover, it is required of stewards that they be found trustworthy.",
             "3": "But with me it is a very small thing that I should be judged by you or by any human court. In fact, I do not even judge myself.",
@@ -30676,7 +30676,7 @@
             "20": "For the kingdom of God does not consist in talk but in power.",
             "21": "What do you wish? Shall I come to you with a rod, or with love in a spirit of gentleness?"
         },
-        "15": {
+        "5": {
             "1": "It is actually reported that there is sexual immorality among you, and of a kind that is not tolerated even among pagans, for a man has his father's wife.",
             "2": "And you are arrogant! Ought you not rather to mourn? Let him who has done this be removed from among you.",
             "3": "For though absent in body, I am present in spirit; and as if present, I have already pronounced judgment on the one who did such a thing.",
@@ -30691,7 +30691,7 @@
             "12": "For what have I to do with judging outsiders? Is it not those inside the church whom you are to judge?",
             "13": "God judges those outside. \\\"Purge the evil person from among you.\\\""
         },
-        "16": {
+        "6": {
             "1": "When one of you has a grievance against another, does he dare go to law before the unrighteous instead of the saints?",
             "2": "Or do you not know that the saints will judge the world? And if the world is to be judged by you, are you incompetent to try trivial cases?",
             "3": "Do you not know that we are to judge angels? How much more, then, matters pertaining to this life!",
@@ -30713,7 +30713,7 @@
             "19": "Or do you not know that your body is a temple of the Holy Spirit within you, whom you have from God? You are not your own,",
             "20": "for you were bought with a price. So glorify God in your body."
         },
-        "17": {
+        "7": {
             "1": "Now concerning the matters about which you wrote: \\\"It is good for a man not to have sexual relations with a woman.\\\"",
             "2": "But because of the temptation to sexual immorality, each man should have his own wife and each woman her own husband.",
             "3": "The husband should give to his wife her conjugal rights, and likewise the wife to her husband.",
@@ -30755,7 +30755,7 @@
             "39": "A wife is bound to her husband as long as he lives. But if her husband dies, she is free to be married to whom she wishes, only in the Lord.",
             "40": "Yet in my judgment she is happier if she remains as she is. And I think that I too have the Spirit of God."
         },
-        "18": {
+        "8": {
             "1": "Now concerning food offered to idols: we know that \\\"all of us possess knowledge.\\\" This \\\"knowledge\\\" puffs up, but love builds up.",
             "2": "If anyone imagines that he knows something, he does not yet know as he ought to know.",
             "3": "But if anyone loves God, he is known by God.",
@@ -30770,7 +30770,7 @@
             "12": "Thus, sinning against your brothers and wounding their conscience when it is weak, you sin against Christ.",
             "13": "Therefore, if food makes my brother stumble, I will never eat meat, lest I make my brother stumble."
         },
-        "19": {
+        "9": {
             "1": "Am I not free? Am I not an apostle? Have I not seen Jesus our Lord? Are not you my workmanship in the Lord?",
             "2": "If to others I am not an apostle, at least I am to you, for you are the seal of my apostleship in the Lord.",
             "3": "This is my defense to those who would examine me.",
@@ -30799,7 +30799,7 @@
             "26": "So I do not run aimlessly; I do not box as one beating the air.",
             "27": "But I discipline my body and keep it under control, lest after preaching to others I myself should be disqualified."
         },
-        "110": {
+        "10": {
             "1": "I want you to know, brothers, that our fathers were all under the cloud, and all passed through the sea,",
             "2": "and all were baptized into Moses in the cloud and in the sea,",
             "3": "and all ate the same spiritual food,",
@@ -30834,7 +30834,7 @@
             "32": "Give no offense to Jews or to Greeks or to the church of God,",
             "33": "just as I try to please everyone in everything I do, not seeking my own advantage, but that of many, that they may be saved."
         },
-        "111": {
+        "11": {
             "1": "Be imitators of me, as I am of Christ.",
             "2": "Now I commend you because you remember me in everything and maintain the traditions even as I delivered them to you.",
             "3": "But I want you to understand that the head of every man is Christ, the head of a wife is her husband, and the head of Christ is God.",
@@ -30870,7 +30870,7 @@
             "33": "So then, my brothers, when you come together to eat, wait for one another--",
             "34": "if anyone is hungry, let him eat at home--so that when you come together it will not be for judgment. About the other things I will give directions when I come."
         },
-        "112": {
+        "12": {
             "1": "Now concerning spiritual gifts, brothers, I do not want you to be uninformed.",
             "2": "You know that when you were pagans you were led astray to mute idols, however you were led.",
             "3": "Therefore I want you to understand that no one speaking in the Spirit of God ever says \\\"Jesus is accursed!\\\" and no one can say \\\"Jesus is Lord\\\" except in the Holy Spirit.",
@@ -30903,7 +30903,7 @@
             "30": "Do all possess gifts of healing? Do all speak with tongues? Do all interpret?",
             "31": "But earnestly desire the higher gifts.And I will show you a still more excellent way."
         },
-        "113": {
+        "13": {
             "1": "If I speak in the tongues of men and of angels, but have not love, I am a noisy gong or a clanging cymbal.",
             "2": "And if I have prophetic powers, and understand all mysteries and all knowledge, and if I have all faith, so as to remove mountains, but have not love, I am nothing.",
             "3": "If I give away all I have, and if I deliver up my body to be burned, but have not love, I gain nothing.",
@@ -30918,7 +30918,7 @@
             "12": "For now we see in a mirror dimly, but then face to face. Now I know in part; then I shall know fully, even as I have been fully known.",
             "13": "So now faith, hope, and love abide, these three; but the greatest of these is love."
         },
-        "114": {
+        "14": {
             "1": "Pursue love, and earnestly desire the spiritual gifts, especially that you may prophesy.",
             "2": "For one who speaks in a tongue speaks not to men but to God; for no one understands him, but he utters mysteries in the Spirit.",
             "3": "On the other hand, the one who prophesies speaks to people for their upbuilding and encouragement and consolation.",
@@ -30960,7 +30960,7 @@
             "39": "So, my brothers, earnestly desire to prophesy, and do not forbid speaking in tongues.",
             "40": "But all things should be done decently and in order."
         },
-        "115": {
+        "15": {
             "1": "Now I would remind you, brothers, of the gospel I preached to you, which you received, in which you stand,",
             "2": "and by which you are being saved, if you hold fast to the word I preached to you--unless you believed in vain.",
             "3": "For I delivered to you as of first importance what I also received: that Christ died for our sins in accordance with the Scriptures,",
@@ -31020,7 +31020,7 @@
             "57": "But thanks be to God, who gives us the victory through our Lord Jesus Christ.",
             "58": "Therefore, my beloved brothers, be steadfast, immovable, always abounding in the work of the Lord, knowing that in the Lord your labor is not in vain."
         },
-        "116": {
+        "16": {
             "1": "Now concerning the collection for the saints: as I directed the churches of Galatia, so you also are to do.",
             "2": "On the first day of every week, each of you is to put something aside and store it up, as he may prosper, so that there will be no collecting when I come.",
             "3": "And when I arrive, I will send those whom you accredit by letter to carry your gift to Jerusalem.",
@@ -31045,8 +31045,10 @@
             "22": "If anyone has no love for the Lord, let him be accursed. Our Lord, come!",
             "23": "The grace of the Lord Jesus be with you.",
             "24": "My love be with you all in Christ Jesus. Amen."
-        },
-        "21": {
+        }
+    },
+    "2Co": {
+        "1": {
             "1": "Paul, an apostle of Christ Jesus by the will of God, and Timothy our brother,To the church of God that is at Corinth, with all the saints who are in the whole of Achaia:",
             "2": "Grace to you and peace from God our Father and the Lord Jesus Christ.",
             "3": "Blessed be the God and Father of our Lord Jesus Christ, the Father of mercies and God of all comfort,",
@@ -31072,7 +31074,7 @@
             "23": "But I call God to witness against me--it was to spare you that I refrained from coming again to Corinth.",
             "24": "Not that we lord it over your faith, but we work with you for your joy, for you stand firm in your faith."
         },
-        "22": {
+        "2": {
             "1": "For I made up my mind not to make another painful visit to you.",
             "2": "For if I cause you pain, who is there to make me glad but the one whom I have pained?",
             "3": "And I wrote as I did, so that when I came I might not suffer pain from those who should have made me rejoice, for I felt sure of all of you, that my joy would be the joy of you all.",
@@ -31091,7 +31093,7 @@
             "16": "to one a fragrance from death to death, to the other a fragrance from life to life. Who is sufficient for these things?",
             "17": "For we are not, like so many, peddlers of God's word, but as men of sincerity, as commissioned by God, in the sight of God we speak in Christ."
         },
-        "23": {
+        "3": {
             "1": "Are we beginning to commend ourselves again? Or do we need, as some do, letters of recommendation to you, or from you?",
             "2": "You yourselves are our letter of recommendation, written on our hearts, to be known and read by all.",
             "3": "And you show that you are a letter from Christ delivered by us, written not with ink but with the Spirit of the living God, not on tablets of stone but on tablets of human hearts.",
@@ -31111,7 +31113,7 @@
             "17": "Now the Lord is the Spirit, and where the Spirit of the Lord is, there is freedom.",
             "18": "And we all, with unveiled face, beholding the glory of the Lord, are being transformed into the same image from one degree of glory to another. For this comes from the Lord who is the Spirit."
         },
-        "24": {
+        "4": {
             "1": "Therefore, having this ministry by the mercy of God, we do not lose heart.",
             "2": "But we have renounced disgraceful, underhanded ways. We refuse to practice cunning or to tamper with God's word, but by the open statement of the truth we would commend ourselves to everyone's conscience in the sight of God.",
             "3": "And even if our gospel is veiled, it is veiled only to those who are perishing.",
@@ -31131,7 +31133,7 @@
             "17": "For this slight momentary affliction is preparing for us an eternal weight of glory beyond all comparison,",
             "18": "as we look not to the things that are seen but to the things that are unseen. For the things that are seen are transient, but the things that are unseen are eternal."
         },
-        "25": {
+        "5": {
             "1": "For we know that if the tent, which is our earthly home, is destroyed, we have a building from God, a house not made with hands, eternal in the heavens.",
             "2": "For in this tent we groan, longing to put on our heavenly dwelling,",
             "3": "if indeed by putting it on we may not be found naked.",
@@ -31154,7 +31156,7 @@
             "20": "Therefore, we are ambassadors for Christ, God making his appeal through us. We implore you on behalf of Christ, be reconciled to God.",
             "21": "For our sake he made him to be sin who knew no sin, so that in him we might become the righteousness of God."
         },
-        "26": {
+        "6": {
             "1": "Working together with him, then, we appeal to you not to receive the grace of God in vain.",
             "2": "For he says, \\\"In a favorable time I listened to you, and in a day of salvation I have helped you.\\\"Behold, now is the favorable time; behold, now is the day of salvation.",
             "3": "We put no obstacle in anyone's way, so that no fault may be found with our ministry,",
@@ -31174,7 +31176,7 @@
             "17": "Therefore go out from their midst, and be separate from them, says the Lord, and touch no unclean thing; then I will welcome you,",
             "18": "and I will be a father to you, and you shall be sons and daughters to me, says the Lord Almighty.\\\""
         },
-        "27": {
+        "7": {
             "1": "Since we have these promises, beloved, let us cleanse ourselves from every defilement of body and spirit, bringing holiness to completion in the fear of God.",
             "2": "Make room in your hearts for us. We have wronged no one, we have corrupted no one, we have taken advantage of no one.",
             "3": "I do not say this to condemn you, for I said before that you are in our hearts, to die together and to live together.",
@@ -31192,7 +31194,7 @@
             "15": "And his affection for you is even greater, as he remembers the obedience of you all, how you received him with fear and trembling.",
             "16": "I rejoice, because I have perfect confidence in you."
         },
-        "28": {
+        "8": {
             "1": "We want you to know, brothers, about the grace of God that has been given among the churches of Macedonia,",
             "2": "for in a severe test of affliction, their abundance of joy and their extreme poverty have overflowed in a wealth of generosity on their part.",
             "3": "For they gave according to their means, as I can testify, and beyond their means, of their own free will,",
@@ -31218,7 +31220,7 @@
             "23": "As for Titus, he is my partner and fellow worker for your benefit. And as for our brothers, they are messengers of the churches, the glory of Christ.",
             "24": "So give proof before the churches of your love and of our boasting about you to these men."
         },
-        "29": {
+        "9": {
             "1": "Now it is superfluous for me to write to you about the ministry for the saints,",
             "2": "for I know your readiness, of which I boast about you to the people of Macedonia, saying that Achaia has been ready since last year. And your zeal has stirred up most of them.",
             "3": "But I am sending the brothers so that our boasting about you may not prove vain in this matter, so that you may be ready, as I said you would be.",
@@ -31235,7 +31237,7 @@
             "14": "while they long for you and pray for you, because of the surpassing grace of God upon you.",
             "15": "Thanks be to God for his inexpressible gift!"
         },
-        "210": {
+        "10": {
             "1": "I, Paul, myself entreat you, by the meekness and gentleness of Christ--I who am humble when face to face with you, but bold toward you when I am away!--",
             "2": "I beg of you that when I am present I may not have to show boldness with such confidence as I count on showing against some who suspect us of walking according to the flesh.",
             "3": "For though we walk in the flesh, we are not waging war according to the flesh.",
@@ -31255,7 +31257,7 @@
             "17": "\\\"Let the one who boasts, boast in the Lord.\\\"",
             "18": "For it is not the one who commends himself who is approved, but the one whom the Lord commends."
         },
-        "211": {
+        "11": {
             "1": "I wish you would bear with me in a little foolishness. Do bear with me!",
             "2": "I feel a divine jealousy for you, for I betrothed you to one husband, to present you as a pure virgin to Christ.",
             "3": "But I am afraid that as the serpent deceived Eve by his cunning, your thoughts will be led astray from a sincere and pure devotion to Christ.",
@@ -31290,7 +31292,7 @@
             "32": "At Damascus, the governor under King Aretas was guarding the city of Damascus in order to seize me,",
             "33": "but I was let down in a basket through a window in the wall and escaped his hands."
         },
-        "212": {
+        "12": {
             "1": "I must go on boasting. Though there is nothing to be gained by it, I will go on to visions and revelations of the Lord.",
             "2": "I know a man in Christ who fourteen years ago was caught up to the third heaven--whether in the body or out of the body I do not know, God knows.",
             "3": "And I know that this man was caught up into paradise--whether in the body or out of the body I do not know, God knows--",
@@ -31313,7 +31315,7 @@
             "20": "For I fear that perhaps when I come I may find you not as I wish, and that you may find me not as you wish--that perhaps there may be quarreling, jealousy, anger, hostility, slander, gossip, conceit, and disorder.",
             "21": "I fear that when I come again my God may humble me before you, and I may have to mourn over many of those who sinned earlier and have not repented of the impurity, sexual immorality, and sensuality that they have practiced."
         },
-        "213": {
+        "13": {
             "1": "This is the third time I am coming to you. Every charge must be established by the evidence of two or three witnesses.",
             "2": "I warned those who sinned before and all the others, and I warn them now while absent, as I did when present on my second visit, that if I come again I will not spare them--",
             "3": "since you seek proof that Christ is speaking in me. He is not weak in dealing with you, but is powerful among you.",
@@ -31662,7 +31664,7 @@
             "24": "Grace be with all who love our Lord Jesus Christ with love incorruptible."
         }
     },
-    "Phi": {
+    "Php": {
         "1": {
             "1": "Paul and Timothy, servants of Christ Jesus,To all the saints in Christ Jesus who are at Philippi, with the overseers and deacons:",
             "2": "Grace to you and peace from God our Father and the Lord Jesus Christ.",
@@ -32037,8 +32039,8 @@
             "18": "The grace of our Lord Jesus Christ be with you all."
         }
     },
-    "Ti": {
-        "11": {
+    "1Ti": {
+        "1": {
             "1": "Paul, an apostle of Christ Jesus by command of God our Savior and of Christ Jesus our hope,",
             "2": "To Timothy, my true child in the faith:Grace, mercy, and peace from God the Father and Christ Jesus our Lord.",
             "3": "As I urged you when I was going to Macedonia, remain at Ephesus that you may charge certain persons not to teach any different doctrine,",
@@ -32060,7 +32062,7 @@
             "19": "holding faith and a good conscience. By rejecting this, some have made shipwreck of their faith,",
             "20": "among whom are Hymenaeus and Alexander, whom I have handed over to Satan that they may learn not to blaspheme."
         },
-        "12": {
+        "2": {
             "1": "First of all, then, I urge that supplications, prayers, intercessions, and thanksgivings be made for all people,",
             "2": "for kings and all who are in high positions, that we may lead a peaceful and quiet life, godly and dignified in every way.",
             "3": "This is good, and it is pleasing in the sight of God our Savior,",
@@ -32077,7 +32079,7 @@
             "14": "and Adam was not deceived, but the woman was deceived and became a transgressor.",
             "15": "Yet she will be saved through childbearing--if they continue in faith and love and holiness, with self-control."
         },
-        "13": {
+        "3": {
             "1": "The saying is trustworthy: If anyone aspires to the office of overseer, he desires a noble task.",
             "2": "Therefore an overseer must be above reproach, the husband of one wife, sober-minded, self-controlled, respectable, hospitable, able to teach,",
             "3": "not a drunkard, not violent but gentle, not quarrelsome, not a lover of money.",
@@ -32095,7 +32097,7 @@
             "15": "if I delay, you may know how one ought to behave in the household of God, which is the church of the living God, a pillar and buttress of truth.",
             "16": "Great indeed, we confess, is the mystery of godliness: He was manifested in the flesh, vindicated by the Spirit, seen by angels, proclaimed among the nations, believed on in the world, taken up in glory."
         },
-        "14": {
+        "4": {
             "1": "Now the Spirit expressly says that in later times some will depart from the faith by devoting themselves to deceitful spirits and teachings of demons,",
             "2": "through the insincerity of liars whose consciences are seared,",
             "3": "who forbid marriage and require abstinence from foods that God created to be received with thanksgiving by those who believe and know the truth.",
@@ -32113,7 +32115,7 @@
             "15": "Practice these things, devote yourself to them, so that all may see your progress.",
             "16": "Keep a close watch on yourself and on the teaching. Persist in this, for by so doing you will save both yourself and your hearers."
         },
-        "15": {
+        "5": {
             "1": "Do not rebuke an older man but encourage him as you would a father. Treat younger men like brothers,",
             "2": "older women like mothers, younger women like sisters, in all purity.",
             "3": "Honor widows who are truly widows.",
@@ -32140,7 +32142,7 @@
             "24": "The sins of some men are conspicuous, going before them to judgment, but the sins of others appear later.",
             "25": "So also good works are conspicuous, and even those that are not cannot remain hidden."
         },
-        "16": {
+        "6": {
             "1": "Let all who are under a yoke as slaves regard their own masters as worthy of all honor, so that the name of God and the teaching may not be reviled.",
             "2": "Those who have believing masters must not be disrespectful on the ground that they are brothers; rather they must serve all the better since those who benefit by their good service are believers and beloved.Teach and urge these things.",
             "3": "If anyone teaches a different doctrine and does not agree with the sound words of our Lord Jesus Christ and the teaching that accords with godliness,",
@@ -32162,8 +32164,10 @@
             "19": "thus storing up treasure for themselves as a good foundation for the future, so that they may take hold of that which is truly life.",
             "20": "O Timothy, guard the deposit entrusted to you. Avoid the irreverent babble and contradictions of what is falsely called \\\"knowledge,\\\"",
             "21": "for by professing it some have swerved from the faith.Grace be with you."
-        },
-        "21": {
+        }
+    },
+    "2Ti": {
+        "1": {
             "1": "Paul, an apostle of Christ Jesus by the will of God according to the promise of the life that is in Christ Jesus,",
             "2": "To Timothy, my beloved child:Grace, mercy, and peace from God the Father and Christ Jesus our Lord.",
             "3": "I thank God whom I serve, as did my ancestors, with a clear conscience, as I remember you constantly in my prayers night and day.",
@@ -32183,7 +32187,7 @@
             "17": "but when he arrived in Rome he searched for me earnestly and found me--",
             "18": "may the Lord grant him to find mercy from the Lord on that Day!--and you well know all the service he rendered at Ephesus."
         },
-        "22": {
+        "2": {
             "1": "You then, my child, be strengthened by the grace that is in Christ Jesus,",
             "2": "and what you have heard from me in the presence of many witnesses entrust to faithful men who will be able to teach others also.",
             "3": "Share in suffering as a good soldier of Christ Jesus.",
@@ -32211,7 +32215,7 @@
             "25": "correcting his opponents with gentleness. God may perhaps grant them repentance leading to a knowledge of the truth,",
             "26": "and they may escape from the snare of the devil, after being captured by him to do his will."
         },
-        "23": {
+        "3": {
             "1": "But understand this, that in the last days there will come times of difficulty.",
             "2": "For people will be lovers of self, lovers of money, proud, arrogant, abusive, disobedient to their parents, ungrateful, unholy,",
             "3": "heartless, unappeasable, slanderous, without self-control, brutal, not loving good,",
@@ -32230,7 +32234,7 @@
             "16": "All Scripture is breathed out by God and profitable for teaching, for reproof, for correction, and for training in righteousness,",
             "17": "that the man of God may be competent, equipped for every good work."
         },
-        "24": {
+        "4": {
             "1": "I charge you in the presence of God and of Christ Jesus, who is to judge the living and the dead, and by his appearing and his kingdom:",
             "2": "preach the word; be ready in season and out of season; reprove, rebuke, and exhort, with complete patience and teaching.",
             "3": "For the time is coming when people will not endure sound teaching, but having itching ears they will accumulate for themselves teachers to suit their own passions,",
@@ -32669,7 +32673,7 @@
             "25": "Grace be with all of you."
         }
     },
-    "Jam": {
+    "Jas": {
         "1": {
             "1": "James, a servant of God and of the Lord Jesus Christ,To the twelve tribes in the Dispersion:Greetings.",
             "2": "Count it all joy, my brothers, when you meet trials of various kinds,",
@@ -32789,8 +32793,8 @@
             "20": "let him know that whoever brings back a sinner from his wandering will save his soul from death and will cover a multitude of sins."
         }
     },
-    "Pe": {
-        "11": {
+    "1Pe": {
+        "1": {
             "1": "Peter, an apostle of Jesus Christ, To those who are elect exiles of the dispersion in Pontus, Galatia, Cappadocia, Asia, and Bithynia,",
             "2": "according to the foreknowledge of God the Father, in the sanctification of the Spirit, for obedience to Jesus Christ and for sprinkling with his blood:May grace and peace be multiplied to you.",
             "3": "Blessed be the God and Father of our Lord Jesus Christ! According to his great mercy, he has caused us to be born again to a living hope through the resurrection of Jesus Christ from the dead,",
@@ -32817,7 +32821,7 @@
             "24": "for \\\"All flesh is like grass and all its glory like the flower of grass. The grass withers, and the flower falls,",
             "25": "but the word of the Lord remains forever.\\\"And this word is the good news that was preached to you."
         },
-        "12": {
+        "2": {
             "1": "So put away all malice and all deceit and hypocrisy and envy and all slander.",
             "2": "Like newborn infants, long for the pure spiritual milk, that by it you may grow up to salvation--",
             "3": "if indeed you have tasted that the Lord is good.",
@@ -32844,7 +32848,7 @@
             "24": "He himself bore our sins in his body on the tree, that we might die to sin and live to righteousness. By his wounds you have been healed.",
             "25": "For you were straying like sheep, but have now returned to the Shepherd and Overseer of your souls."
         },
-        "13": {
+        "3": {
             "1": "Likewise, wives, be subject to your own husbands, so that even if some do not obey the word, they may be won without a word by the conduct of their wives--",
             "2": "when they see your respectful and pure conduct.",
             "3": "Do not let your adorning be external--the braiding of hair, the wearing of gold, or the putting on of clothing--",
@@ -32868,7 +32872,7 @@
             "21": "Baptism, which corresponds to this, now saves you, not as a removal of dirt from the body but as an appeal to God for a good conscience, through the resurrection of Jesus Christ,",
             "22": "who has gone into heaven and is at the right hand of God, with angels, authorities, and powers having been subjected to him."
         },
-        "14": {
+        "4": {
             "1": "Since therefore Christ suffered in the flesh, arm yourselves with the same way of thinking, for whoever has suffered in the flesh has ceased from sin,",
             "2": "so as to live for the rest of the time in the flesh no longer for human passions but for the will of God.",
             "3": "The time that is past suffices for doing what the Gentiles want to do, living in sensuality, passions, drunkenness, orgies, drinking parties, and lawless idolatry.",
@@ -32889,7 +32893,7 @@
             "18": "And \\\"If the righteous is scarcely saved, what will become of the ungodly and the sinner?\\\"",
             "19": "Therefore let those who suffer according to God's will entrust their souls to a faithful Creator while doing good."
         },
-        "15": {
+        "5": {
             "1": "So I exhort the elders among you, as a fellow elder and a witness of the sufferings of Christ, as well as a partaker in the glory that is going to be revealed:",
             "2": "shepherd the flock of God that is among you, exercising oversight, not under compulsion, but willingly, as God would have you; not for shameful gain, but eagerly;",
             "3": "not domineering over those in your charge, but being examples to the flock.",
@@ -32904,8 +32908,10 @@
             "12": "By Silvanus, a faithful brother as I regard him, I have written briefly to you, exhorting and declaring that this is the true grace of God. Stand firm in it.",
             "13": "She who is at Babylon, who is likewise chosen, sends you greetings, and so does Mark, my son.",
             "14": "Greet one another with the kiss of love.Peace to all of you who are in Christ."
-        },
-        "21": {
+        }
+    },
+    "2Pe": {
+        "1": {
             "1": "Simeon Peter, a servant and apostle of Jesus Christ,To those who have obtained a faith of equal standing with ours by the righteousness of our God and Savior Jesus Christ:",
             "2": "May grace and peace be multiplied to you in the knowledge of God and of Jesus our Lord.",
             "3": "His divine power has granted to us all things that pertain to life and godliness, through the knowledge of him who called us to his own glory and excellence,",
@@ -32928,7 +32934,7 @@
             "20": "knowing this first of all, that no prophecy of Scripture comes from someone's own interpretation.",
             "21": "For no prophecy was ever produced by the will of man, but men spoke from God as they were carried along by the Holy Spirit."
         },
-        "22": {
+        "2": {
             "1": "But false prophets also arose among the people, just as there will be false teachers among you, who will secretly bring in destructive heresies, even denying the Master who bought them, bringing upon themselves swift destruction.",
             "2": "And many will follow their sensuality, and because of them the way of truth will be blasphemed.",
             "3": "And in their greed they will exploit you with false words. Their condemnation from long ago is not idle, and their destruction is not asleep.",
@@ -32952,7 +32958,7 @@
             "21": "For it would have been better for them never to have known the way of righteousness than after knowing it to turn back from the holy commandment delivered to them.",
             "22": "What the true proverb says has happened to them: \\\"The dog returns to its own vomit, and the sow, after washing herself, returns to wallow in the mire.\\\""
         },
-        "23": {
+        "3": {
             "1": "This is now the second letter that I am writing to you, beloved. In both of them I am stirring up your sincere mind by way of reminder,",
             "2": "that you should remember the predictions of the holy prophets and the commandment of the Lord and Savior through your apostles,",
             "3": "knowing this first of all, that scoffers will come in the last days with scoffing, following their own sinful desires.",
@@ -32973,8 +32979,8 @@
             "18": "But grow in the grace and knowledge of our Lord and Savior Jesus Christ. To him be the glory both now and to the day of eternity. Amen."
         }
     },
-    "Jo": {
-        "11": {
+    "1Jn": {
+        "1": {
             "1": "That which was from the beginning, which we have heard, which we have seen with our eyes, which we looked upon and have touched with our hands, concerning the word of life--",
             "2": "the life was made manifest, and we have seen it, and testify to it and proclaim to you the eternal life, which was with the Father and was made manifest to us--",
             "3": "that which we have seen and heard we proclaim also to you, so that you too may have fellowship with us; and indeed our fellowship is with the Father and with his Son Jesus Christ.",
@@ -32986,7 +32992,7 @@
             "9": "If we confess our sins, he is faithful and just to forgive us our sins and to cleanse us from all unrighteousness.",
             "10": "If we say we have not sinned, we make him a liar, and his word is not in us."
         },
-        "12": {
+        "2": {
             "1": "My little children, I am writing these things to you so that you may not sin. But if anyone does sin, we have an advocate with the Father, Jesus Christ the righteous.",
             "2": "He is the propitiation for our sins, and not for ours only but also for the sins of the whole world.",
             "3": "And by this we know that we have come to know him, if we keep his commandments.",
@@ -33017,7 +33023,7 @@
             "28": "And now, little children, abide in him, so that when he appears we may have confidence and not shrink from him in shame at his coming.",
             "29": "If you know that he is righteous, you may be sure that everyone who practices righteousness has been born of him."
         },
-        "13": {
+        "3": {
             "1": "See what kind of love the Father has given to us, that we should be called children of God; and so we are. The reason why the world does not know us is that it did not know him.",
             "2": "Beloved, we are God's children now, and what we will be has not yet appeared; but we know that when he appears we shall be like him, because we shall see him as he is.",
             "3": "And everyone who thus hopes in him purifies himself as he is pure.",
@@ -33043,7 +33049,7 @@
             "23": "And this is his commandment, that we believe in the name of his Son Jesus Christ and love one another, just as he has commanded us.",
             "24": "Whoever keeps his commandments abides in him, and he in them. And by this we know that he abides in us, by the Spirit whom he has given us."
         },
-        "14": {
+        "4": {
             "1": "Beloved, do not believe every spirit, but test the spirits to see whether they are from God, for many false prophets have gone out into the world.",
             "2": "By this you know the Spirit of God: every spirit that confesses that Jesus Christ has come in the flesh is from God,",
             "3": "and every spirit that does not confess Jesus is not from God. This is the spirit of the antichrist, which you heard was coming and now is in the world already.",
@@ -33066,7 +33072,7 @@
             "20": "If anyone says, \\\"I love God,\\\" and hates his brother, he is a liar; for he who does not love his brother whom he has seen cannot love God whom he has not seen.",
             "21": "And this commandment we have from him: whoever loves God must also love his brother."
         },
-        "15": {
+        "5": {
             "1": "Everyone who believes that Jesus is the Christ has been born of God, and everyone who loves the Father loves whoever has been born of him.",
             "2": "By this we know that we love the children of God, when we love God and obey his commandments.",
             "3": "For this is the love of God, that we keep his commandments. And his commandments are not burdensome.",
@@ -33088,8 +33094,10 @@
             "19": "We know that we are from God, and the whole world lies in the power of the evil one.",
             "20": "And we know that the Son of God has come and has given us understanding, so that we may know him who is true; and we are in him who is true, in his Son Jesus Christ. He is the true God and eternal life.",
             "21": "Little children, keep yourselves from idols."
-        },
-        "21": {
+         }
+    },
+    "2Jn": {
+        "1": {
             "1": "The elder to the elect lady and her children, whom I love in truth, and not only I, but also all who know the truth,",
             "2": "because of the truth that abides in us and will be with us forever:",
             "3": "Grace, mercy, and peace will be with us, from God the Father and from Jesus Christ the Father's Son, in truth and love.",
@@ -33103,8 +33111,10 @@
             "11": "for whoever greets him takes part in his wicked works.",
             "12": "Though I have much to write to you, I would rather not use paper and ink. Instead I hope to come to you and talk face to face, so that our joy may be complete.",
             "13": "The children of your elect sister greet you."
-        },
-        "31": {
+         }
+    },
+    "3Jn": {
+        "1": {
             "1": "The elder to the beloved Gaius, whom I love in truth.",
             "2": "Beloved, I pray that all may go well with you and that you may be in good health, as it goes well with your soul.",
             "3": "For I rejoiced greatly when the brothers came and testified to your truth, as indeed you are walking in the truth.",
