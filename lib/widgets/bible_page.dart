@@ -86,7 +86,7 @@ class _BiblePageState extends State<BiblePage> {
   // 장/편 표시 텍스트 생성
   String _getChapterText(String bookName, int chapter, {bool isEnglish = false}) {
     if (_isPsalm(bookName)) {
-      return isEnglish ? 'Psalm $chapter' : '$chapter편';
+      return isEnglish ? 'Chapter $chapter' : '$chapter편';
     }
     return isEnglish ? 'Chapter $chapter' : '$chapter장';
   }
@@ -246,11 +246,11 @@ class _BiblePageState extends State<BiblePage> {
                   text: TextSpan(
                     children: [
                       TextSpan(
-                        text: '${verse.verseNumber} ',
+                        text: '${verse.verseNumber}. ',
                         style: TextStyle(
-                          fontSize: widget.bodyFontSize - 2,
+                          fontSize: widget.bodyFontSize,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade600,
+                          color: Colors.blue.shade600,
                         ),
                       ),
                       TextSpan(
