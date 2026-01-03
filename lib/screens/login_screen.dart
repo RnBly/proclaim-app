@@ -214,6 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             : Column(
                           children: [
                             // ========== Google 로그인 버튼 ==========
+                            /*
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
@@ -245,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
 
                             const SizedBox(height: 12),
-
+*/
                             // ========== Kakao 로그인 버튼 ==========
                             SizedBox(
                               width: double.infinity,
