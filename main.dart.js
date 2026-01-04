@@ -88039,9 +88039,9 @@ case 2:p=b.a
 o=p+"/bible.json"
 n=p+"/bible_esv.json"
 s=3
-return A.J(q.lM("https://raw.githubusercontent.com/RnBly/proclaim_test/main/assets/bible.json",o,"bible.json"),$async$lT)
+return A.J(q.lM("https://raw.githubusercontent.com/RnBly/proclaim-app/main/assets/bible.json",o,"bible.json"),$async$lT)
 case 3:s=4
-return A.J(q.lM("https://raw.githubusercontent.com/RnBly/proclaim_test/main/assets/bible_esv.json",n,"bible_esv.json"),$async$lT)
+return A.J(q.lM("https://raw.githubusercontent.com/RnBly/proclaim-app/main/assets/bible_esv.json",n,"bible_esv.json"),$async$lT)
 case 4:m=B.br
 s=5
 return A.J(A.aAC(o).vj(),$async$lT)
