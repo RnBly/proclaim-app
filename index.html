@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="/proclaim_test/">
+  <meta charset="UTF-8">
+  <meta name="google-signin-client_id" content="489632599986-dih17k2i8ko3dalu7ejtraak4vtnej5n.apps.googleusercontent.comgit">
+
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Proclaim - 매일 성경 읽기">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Proclaim">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Proclaim</title>
+  <link rel="manifest" href="manifest.json">
+
+  <script>
+    const serviceWorkerVersion = "122125752";
+  </script>
+  <script src="flutter.js" defer></script>
+</head>
+<body>
+<!-- Kakao SDK -->
+<script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
+<script>
+  if (typeof Kakao !== 'undefined') {
+    Kakao.init('be5044a082e1ea0952a49969b679cb97');
+    console.log('✅ Kakao SDK initialized:', Kakao.isInitialized());
+
+    // Kakao 로그인 함수 (Flutter에서 호출 가능)
+     window.kakaoLogin = {
+      // 카카오 로그인 실행 (팝업)
+      login: function() {
+        return new Promise((resolve, reject) => {
+          if (typeof Kakao === 'undefined') {
+            reject({ error: 'Kakao SDK not loaded' });
+            return;
+          }
+
+          // 팝업으로 로그인
+          Kakao.Auth.login({
+            success: function(authObj) {
+              console.log('✅ Kakao auth success:', authObj);
+              // 사용자 정보 가져오기
+              window.kakaoLogin.getUserInfo()
+                .then(userInfo => resolve(userInfo))
+                .catch(err => reject(err));
+            },
+            fail: function(err) {
+              console.error('❌ Kakao auth failed:', err);
+              reject(err);
+            }
+          });
+        });
+      },
+
+      // 사용자 정보 가져오기
+      getUserInfo: function() {
+        return new Promise((resolve, reject) => {
+          Kakao.API.request({
+            url: '/v2/user/me',
+            success: function(response) {
+              console.log('✅ Kakao user info:', response);
+              const userInfo = {
+                id: response.id.toString(),
+                nickname: response.kakao_account?.profile?.nickname || '카카오 사용자',
+                profileImage: response.kakao_account?.profile?.profile_image_url || '',
+                email: response.kakao_account?.email || ''
+              };
+              resolve(userInfo);
+            },
+            fail: function(error) {
+              console.error('❌ Failed to get user info:', error);
+              reject(error);
+            }
+          });
+        });
+      },
+
+      // 로그아웃
+      logout: function() {
+        return new Promise((resolve, reject) => {
+          if (!Kakao.Auth.getAccessToken()) {
+            resolve();
+            return;
+          }
+
+          Kakao.Auth.logout(function() {
+            console.log('✅ Kakao logout success');
+            resolve();
+          });
+        });
+      }
+    };
+
+    // Kakao 로그아웃 함수
+    window.kakaoLogout = function() {
+      return new Promise((resolve, reject) => {
+        if (Kakao.Auth.getAccessToken()) {
+          Kakao.Auth.logout()
+            .then(function() {
+              console.log('✅ Kakao 로그아웃 성공');
+              resolve();
+            })
+            .catch(function(error) {
+              console.error('❌ Kakao 로그아웃 실패:', error);
+              reject(error);
+            });
+        } else {
+          resolve();
+        }
+      });
+    };
+
+  } else {
+    console.error('❌ Kakao SDK not loaded');
+  }
+</script>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyDl-MCB6udMyGtm6BnwZ9H9zfAL7b1vD2M",
+  authDomain: "proclaim-479112.firebaseapp.com",
+  projectId: "proclaim-479112",
+  storageBucket: "proclaim-479112.firebasestorage.app",
+  messagingSenderId: "489632599986",
+  appId: "1:489632599986:web:262d6d0987431ba2879eab",
+  measurementId: "G-NP82185RPX"
+  };
+
+  window.firebaseApp = initializeApp(firebaseConfig);
+  window.firebaseAuth = getAuth(window.firebaseApp);
+</script>
+
+<script>
+  window.addEventListener('load', function(ev) {
+    _flutter.loader.loadEntrypoint({
+      serviceWorker: {
+        serviceWorkerVersion: serviceWorkerVersion,
+      },
+      onEntrypointLoaded: function(engineInitializer) {
+        engineInitializer.initializeEngine().then(function(appRunner) {
+          appRunner.runApp();
+        });
+      }
+    });
+  });
+</script>
+</body>
+</html>
