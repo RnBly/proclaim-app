@@ -87652,12 +87652,12 @@ $0(){this.a.ax=this.b},
 $S:0}
 A.aro.prototype={
 $0(){var s,r=this.a,q=this.b,p=q.a,o=p==null?null:A.aCp(J.au(p.a,"title_font_size"))
-if(o==null)o=22
+if(o==null)o=24
 A.bh("\ud83d\udcd6 \uc81c\ubaa9 \uae00\uc528 \ud06c\uae30 \ubd88\ub7ec\uc624\uae30: "+A.m(o))
 r.x=o
 p=q.a
 o=p==null?null:A.aCp(J.au(p.a,"body_font_size"))
-if(o==null)o=18
+if(o==null)o=20
 A.bh("\ud83d\udcd6 \ubcf8\ubb38 \uae00\uc528 \ud06c\uae30 \ubd88\ub7ec\uc624\uae30: "+A.m(o))
 r.y=o
 q=q.a
@@ -89112,8 +89112,8 @@ r=q.e
 return A.pK(p,p,A.cl(p,A.f7(A.b([new A.bG(B.Ep,l,p),new A.uy(1,B.n4,A.Qg(A.f7(A.b([j,B.hL,B.Ye,B.dJ,B.Yd,B.cg,k,B.cg,i,B.hL,B.Yp,B.cg,s,B.cg,A.hl(A.b([A.kp(A.aI8(9,32,14,new A.avs(q),r),1),B.yK,A.eY(A.cR(""+B.c.X(r),p,p,p,B.zb,B.by,p),p,40)],m),B.a2,B.V,B.ad),B.hL,A.eY(A.a6w(B.zi,q.gaew(),A.a6x(p,p,B.ba,p,p,p,p,p,p,p,p,p,B.Eh,p,new A.bS(A.cc(10),B.n),p,p,p,p)),p,1/0)],m),B.b0,B.V,B.bw),p,B.mL),p)],m),B.a2,B.V,B.bw),B.r,B.AV,p,p,p,p,n.a.a*0.9),p,p,p,p,new A.bS(o,B.n),p)}}
 A.avk.prototype={
 $0(){var s=this.a
-s.d=22
-s.e=18
+s.d=24
+s.e=20
 s.f=B.dN},
 $S:0}
 A.avn.prototype={
@@ -93571,8 +93571,8 @@ B.aU=new A.av(0,0,0,0)
 B.Ec=new A.av(0,0,0,10)
 B.mH=new A.av(0,0,0,12)
 B.Ed=new A.av(0,0,0,14)
-B.Ee=new A.av(0,0,0,20)
-B.mI=new A.av(0,0,0,8)
+B.Ee=new A.av(0,0,0,15)
+B.mI=new A.av(0,0,0,2)
 B.jc=new A.av(0,0,30,0)
 B.Ef=new A.av(0,14,0,14)
 B.Eg=new A.av(0,15,0,15)

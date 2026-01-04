@@ -10,8 +10,8 @@ const RESOURCES = {"flutter.js": "f393d3c16b631f36852323de8e583132",
 "icons/Icon-maskable-192.png": "281ee10d5cee3871b5a387b0bdc3c080",
 "kakao_login.js": "07414cacc773f442bac5641fec6445a3",
 "manifest.json": "5926c3e8dc52bd152a14be5a0112b103",
-"index.html": "b54181c3be5dfa9a0059d19298b1f2df",
-"/": "b54181c3be5dfa9a0059d19298b1f2df",
+"index.html": "72e0e609ee0fd6ab425c99ad30e033a0",
+"/": "72e0e609ee0fd6ab425c99ad30e033a0",
 "assets/shaders/ink_sparkle.frag": "ecc85a2e95f5e9f53123dcaf8cb9b6ce",
 "assets/AssetManifest.bin.json": "6db17a226f5c195f1c1ac875b7d12f13",
 "assets/assets/images/shofar_logo.png": "3238e1fc2f0f0fbe3e668b5a20f1ad75",
@@ -34,9 +34,9 @@ const RESOURCES = {"flutter.js": "f393d3c16b631f36852323de8e583132",
 "canvaskit/canvaskit.js.symbols": "48c83a2ce573d9692e8d970e288d75f7",
 "canvaskit/skwasm.js.symbols": "262f4827a1317abb59d71d6c587a93e2",
 "favicon.png": "c6f163e05123a399351fa07dfa6c8fe6",
-"flutter_bootstrap.js": "57d57e138e80c725fd1ed18b50ad5ad2",
+"flutter_bootstrap.js": "54ddf019e8a3eb2c6127d1fa5cd406cf",
 "version.json": "a57506586b72d36422f35651deee7501",
-"main.dart.js": "60f869044083c0e15b30c867ece21e30"};
+"main.dart.js": "74a26cbe175539b243cc121e3b5a3f23"};
 // The application shell files that are downloaded before a service worker can
 // start.
 const CORE = ["main.dart.js",
