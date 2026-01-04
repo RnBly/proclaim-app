@@ -67,10 +67,10 @@ class PreferencesService {
   // 설정이 저장되지 않았을 때 사용할 기본값
   
   /// 제목 기본 폰트 크기 (22.0)
-  static const double defaultTitleSize = 22.0;
+  static const double defaultTitleSize = 24.0;
   
   /// 본문 기본 폰트 크기 (18.0)
-  static const double defaultBodySize = 18.0;
+  static const double defaultBodySize = 20.0;
   
   /// 번역 기본 설정 (한글)
   /// 'korean', 'esv', 'compare' 중 하나

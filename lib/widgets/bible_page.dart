@@ -217,7 +217,7 @@ class _BiblePageState extends State<BiblePage> {
             ? () => widget.onMeditationView?.call(verse.book, verse.chapter, verse.verseNumber)
             : null,
         child: Container(
-          margin: const EdgeInsets.only(bottom: 8),
+          margin: const EdgeInsets.only(bottom: 2),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isSelected
@@ -378,7 +378,7 @@ class _BiblePageState extends State<BiblePage> {
             ? () => widget.onMeditationView?.call(reading.book, verse.chapter, verse.verseNumber)
             : null,
         child: Container(
-          margin: const EdgeInsets.only(bottom: 8),
+          margin: const EdgeInsets.only(bottom: 2),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isSelected
@@ -489,7 +489,7 @@ class _BiblePageState extends State<BiblePage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.only(bottom: 15),
               child: Text(
                 '${reading.fullNameEng} ${_getChapterText(reading.bookEng, chapter, isEnglish: true)}',
                 style: TextStyle(
