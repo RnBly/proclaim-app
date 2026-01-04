@@ -407,11 +407,11 @@ class _BiblePageState extends State<BiblePage> {
                   text: TextSpan(
                     children: [
                       TextSpan(
-                        text: '${verse.verseNumber} ',
+                        text: '${verse.verseNumber}. ',
                         style: TextStyle(
-                          fontSize: widget.bodyFontSize - 2,
+                          fontSize: widget.bodyFontSize,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade600,
+                          color: Colors.blue.shade600,
                         ),
                       ),
                       TextSpan(
@@ -584,18 +584,18 @@ class _BiblePageState extends State<BiblePage> {
                       text: TextSpan(
                         children: [
                           TextSpan(
-                            text: '${koreanVerse.verseNumber} ',
+                            text: '${koreanVerse.verseNumber}. ',
                             style: TextStyle(
-                              fontSize: widget.bodyFontSize - 2,
+                              fontSize: widget.bodyFontSize,
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey.shade600,
+                              color: Colors.blue.shade600,
                             ),
                           ),
                           TextSpan(
                             text: koreanVerse.text,
                             style: TextStyle(
                               fontSize: widget.bodyFontSize,
-                              height: 1.6,
+                              height: 1,
                               color: Colors.black87,
                             ),
                           ),
@@ -604,14 +604,14 @@ class _BiblePageState extends State<BiblePage> {
                     ),
                     if (esvVerse.text.isNotEmpty) ...[
                       const SizedBox(height: 8),
-                      const Divider(height: 1),
-                      const SizedBox(height: 8),
+                      // const Divider(height: ),
+                      const SizedBox(height: 2),
                       // 영문 구절
                       RichText(
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: '${esvVerse.verseNumber} ',
+                              text: '${esvVerse.verseNumber}. ',
                               style: TextStyle(
                                 fontSize: widget.bodyFontSize - 2,
                                 fontWeight: FontWeight.bold,
