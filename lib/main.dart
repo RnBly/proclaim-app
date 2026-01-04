@@ -181,7 +181,7 @@ class _SplashScreenState extends State<SplashScreen>
       Navigator.of(context).pushReplacementNamed('/home');
     } else {
       // 로그인되어 있지 않으면 로그인 화면으로 이동
-      Navigator.of(context).pushReplacementNamed('/login');
+      Navigator.of(context).pushReplacementNamed('/home');
     }
   }
 
