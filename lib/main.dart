@@ -85,7 +85,7 @@ class ProclaimApp extends StatelessWidget {
             return const HomeScreen();
           } else {
             // 로그인되어 있지 않으면 로그인 화면 표시
-            return const LoginScreen();
+            return const HomeScreen();
           }
         },
       ),
@@ -93,7 +93,7 @@ class ProclaimApp extends StatelessWidget {
       // 네임드 라우트 정의 (pushNamed로 화면 전환 가능)
       routes: {
         '/home': (context) => const HomeScreen(),
-        '/login': (context) => const LoginScreen(),
+        '/login': (context) => const HomeScreen(),
       },
     );
   }

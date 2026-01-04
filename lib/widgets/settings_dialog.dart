@@ -347,7 +347,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         ),
                       ),
                     ),
-
+/*
                     // 로그인/로그아웃 버튼
                     const SizedBox(height: 12),
                     SizedBox(
@@ -390,6 +390,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         ),
                       ),
                     ),
+         */        
                   ],
                 ),
               ),

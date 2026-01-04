@@ -58,8 +58,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   };
 
   // 글씨 크기 상태
-  double _titleFontSize = 20.0;
-  double _bodyFontSize = 16.0;
+  double _titleFontSize = 24.0;
+  double _bodyFontSize = 18.0;
 
   double _scrollProgress = 0.0;
 
@@ -257,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         ),
       ),
       floatingActionButton: _hasSelectedVerses()
-          ? _buildFloatingActionButtons()
+           ? _buildCopyButtonOnly()  // 복사 버튼만 표시
           : null,
     );
   }
@@ -271,8 +271,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       return 1.0 - (normalizedProgress * 0.5);
     }
   }
-
-  // 확장 가능한 플로팅 버튼들
+  // 복사 버튼만 표시 (묵상 기능 제거)
+Widget _buildCopyButtonOnly() {
+  return Opacity(
+    opacity: _getButtonOpacity(),
+    child: FloatingActionButton(
+      heroTag: 'copy',
+      onPressed: _copySelectedVerses,
+      backgroundColor: Colors.blue,
+      child: const Icon(
+        Icons.content_copy,
+        color: Colors.white,
+        size: 24,
+      ),
+    ),
+  );
+}
+  /*/ 확장 가능한 플로팅 버튼들
   Widget _buildFloatingActionButtons() {
     final authService = AuthService();
     final isLoggedIn = authService.isLoggedIn;
@@ -380,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       ),
     );
   }
-
+ */
   void _showDatePicker() {
     showDialog(
       context: context,
