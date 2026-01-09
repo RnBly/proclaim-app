@@ -257,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         ),
       ),
       floatingActionButton: _hasSelectedVerses()
-           ? _buildCopyButtonOnly()  // 복사 버튼만 표시
+           ? _buildFloatingActionButtons()  // 복사 버튼만 표시
           : null,
     );
   }
@@ -271,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       return 1.0 - (normalizedProgress * 0.5);
     }
   }
-  // 복사 버튼만 표시 (묵상 기능 제거)
+  /*/ 복사 버튼만 표시 (묵상 기능 제거)
 Widget _buildCopyButtonOnly() {
   return Opacity(
     opacity: _getButtonOpacity(),
@@ -287,8 +287,8 @@ Widget _buildCopyButtonOnly() {
     ),
   );
 }
-  /*/ 확장 가능한 플로팅 버튼들
-  Widget _buildFloatingActionButtons() {
+*/
+  _buildFloatingActionButtons() {
     final authService = AuthService();
     final isLoggedIn = authService.isLoggedIn;
 
@@ -395,7 +395,7 @@ Widget _buildCopyButtonOnly() {
       ),
     );
   }
- */
+ 
   void _showDatePicker() {
     showDialog(
       context: context,
@@ -701,6 +701,7 @@ Widget _buildCopyButtonOnly() {
   }
 
   // 묵상 조회
+  // 묵상 조회 - BuildContext 문제 완전 해결 버전
   Future<void> _viewMeditation(String book, int chapter, int verse) async {
     final authService = AuthService();
     final userId = authService.getUserId();
@@ -720,25 +721,27 @@ Widget _buildCopyButtonOnly() {
     if (!mounted) return;
 
     // 묵상 조회 다이얼로그 표시
-    showDialog(
+    await showDialog(
       context: context,
-      builder: (context) => MeditationViewDialog(
+      builder: (dialogContext) => MeditationViewDialog(
         meditations: meditations,
         initialIndex: 0,
         onDelete: (meditationId) async {
           // 삭제 확인 다이얼로그
+          if (!mounted) return;
+
           final confirm = await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
+            context: dialogContext, // ⭐ dialogContext 사용
+            builder: (deleteContext) => AlertDialog(
               title: const Text('묵상 삭제'),
               content: const Text('이 묵상을 삭제하시겠습니까?'),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context, false),
+                  onPressed: () => Navigator.pop(deleteContext, false),
                   child: const Text('취소'),
                 ),
                 TextButton(
-                  onPressed: () => Navigator.pop(context, true),
+                  onPressed: () => Navigator.pop(deleteContext, true),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.red,
                   ),
@@ -753,6 +756,8 @@ Widget _buildCopyButtonOnly() {
             await _loadMeditations();
 
             if (mounted) {
+              Navigator.pop(dialogContext); // 묵상 조회 다이얼로그 닫기
+
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('묵상이 삭제되었습니다'),
@@ -763,41 +768,129 @@ Widget _buildCopyButtonOnly() {
           }
         },
         onEdit: (meditation) async {
-          // 수정 기능
-          final content = await showDialog<String>(
-            context: context,
-            builder: (context) => MeditationWritingDialog(
-              selectedVerses: meditation.verses,
-              initialContent: meditation.content,
-              initialColor: meditation.highlightColor,
-            ),
-          );
+          print('🔧 수정 시작: ${meditation.id}');
 
-          if (content == null || content.isEmpty) return;
-
-          final color = await showDialog<String>(
-            context: context,
-            builder: (context) => const ColorSelectionDialog(),
-          );
-
-          if (color == null) return;
-
-          final updatedMeditation = meditation.copyWith(
-            content: content,
-            highlightColor: color,
-            updatedAt: DateTime.now(),
-          );
-
-          await meditationService.saveMeditation(updatedMeditation);
-          await _loadMeditations();
-
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('묵상이 수정되었습니다'),
-                duration: Duration(seconds: 2),
+          try {
+            // 1단계: 묵상 내용 수정
+            final content = await showDialog<String>(
+              context: dialogContext,
+              builder: (editContext1) => MeditationWritingDialog(
+                selectedVerses: meditation.verses,
+                initialContent: meditation.content,
+                initialColor: meditation.highlightColor,
               ),
             );
+
+            if (content == null || content.isEmpty) {
+              print('❌ 내용 수정 취소됨');
+              return;
+            }
+            print('📝 새 내용: $content');
+
+            // 2단계: 색상 선택
+            final color = await showDialog<String>(
+              context: dialogContext,
+              builder: (editContext2) => const ColorSelectionDialog(),
+            ).catchError((e) {
+              print('⚠️ 색상 선택 다이얼로그 오류 (무시): $e');
+              return null;
+            });
+
+            if (color == null) {
+              print('❌ 색상 선택 취소됨');
+              return;
+            }
+            print('🎨 선택된 색상: $color');
+
+            // 3단계: 수정 확인 다이얼로그
+            final confirm = await showDialog<bool>(
+              context: dialogContext,
+              builder: (confirmContext) => AlertDialog(
+                title: const Text('묵상 수정'),
+                content: const Text('정말 수정하시겠습니까?\n기존 묵상이 삭제되고 새로 저장됩니다.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(confirmContext, false),
+                    child: const Text('취소'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(confirmContext, true),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFFCE6E26),
+                    ),
+                    child: const Text('확인'),
+                  ),
+                ],
+              ),
+            ).catchError((e) {
+              print('⚠️ 확인 다이얼로그 오류 (무시): $e');
+              return null;
+            });
+
+            if (confirm != true) {
+              print('❌ 수정 확인 취소됨');
+              return;
+            }
+
+            print('💾 저장 시작...');
+
+            // 4단계: 기존 묵상 삭제
+            await meditationService.deleteMeditation(userId, meditation.id);
+            print('🗑️ 기존 묵상 삭제 완료');
+
+            // 5단계: 새 묵상으로 저장
+            final newMeditation = Meditation(
+              id: meditationService.generateId(),
+              userId: userId,
+              verses: meditation.verses,
+              content: content,
+              highlightColor: color,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            );
+
+            await meditationService.saveMeditation(newMeditation);
+            print('✅ 새 묵상 저장 완료: ${newMeditation.id}');
+
+            // 6단계: 하이라이트 새로고침
+            await _loadMeditations();
+            print('✅ 하이라이트 업데이트 완료');
+
+            // 다이얼로그 닫기 (안전하게)
+            try {
+              Navigator.pop(dialogContext);
+            } catch (e) {
+              print('⚠️ 다이얼로그 닫기 실패 (무시): $e');
+            }
+
+            if (mounted) {
+              // 성공 메시지
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('묵상이 수정되었습니다'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+
+              // 잠시 대기 후 수정된 묵상 다시 열기
+              await Future.delayed(const Duration(milliseconds: 300));
+
+              if (mounted) {
+                _viewMeditation(book, chapter, verse);
+              }
+            }
+          } catch (e) {
+            print('❌ 전체 오류: $e');
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('오류 발생: $e'),
+                  duration: const Duration(seconds: 3),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           }
         },
       ),

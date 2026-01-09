@@ -85,7 +85,7 @@ class ProclaimApp extends StatelessWidget {
             return const HomeScreen();
           } else {
             // 로그인되어 있지 않으면 로그인 화면 표시
-            return const HomeScreen();
+            return const LoginScreen();
           }
         },
       ),

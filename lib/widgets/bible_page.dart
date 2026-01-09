@@ -595,7 +595,7 @@ class _BiblePageState extends State<BiblePage> {
                             text: koreanVerse.text,
                             style: TextStyle(
                               fontSize: widget.bodyFontSize,
-                              height: 1,
+                              height: 1.4,
                               color: Colors.black87,
                             ),
                           ),
@@ -622,7 +622,7 @@ class _BiblePageState extends State<BiblePage> {
                               text: esvVerse.text,
                               style: TextStyle(
                                 fontSize: widget.bodyFontSize - 1,
-                                height: 1.6,
+                                height: 1.4,
                                 color: Colors.grey.shade700,
                               ),
                             ),

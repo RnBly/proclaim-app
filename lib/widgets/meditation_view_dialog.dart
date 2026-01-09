@@ -239,7 +239,7 @@ class _MeditationViewDialogState extends State<MeditationViewDialog> {
                     height: 48,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        // onEdit을 먼저 호출 (다이얼로그는 onEdit 내부에서 닫음)
                         widget.onEdit?.call(_currentMeditation);
                       },
                       style: ElevatedButton.styleFrom(
