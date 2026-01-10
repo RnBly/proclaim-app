@@ -35,6 +35,8 @@ import '../widgets/verse_selection_dialog.dart';
 import '../widgets/meditation_writing_dialog.dart';
 import '../widgets/color_selection_dialog.dart';
 import '../widgets/meditation_view_dialog.dart';
+import '../widgets/bible_selection_dialog.dart';
+import 'bible_reader_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -153,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             GestureDetector(
               onTap: _showDatePicker,
               child: Text(
-                '오늘의 성경 말씀($dateStr)',
+                '오늘의 말씀($dateStr)',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -163,6 +165,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             ),
             Row(
               children: [
+                IconButton(
+                  icon: const Icon(Icons.menu_book, color: Colors.black87),
+                  onPressed: _showBibleSelectionDialog,
+                ),
                 IconButton(
                   icon: const Icon(Icons.settings, color: Colors.black87),
                   onPressed: _showSettingsDialog,
@@ -771,43 +777,12 @@ Widget _buildCopyButtonOnly() {
           print('🔧 수정 시작: ${meditation.id}');
 
           try {
-            // 1단계: 묵상 내용 수정
-            final content = await showDialog<String>(
-              context: dialogContext,
-              builder: (editContext1) => MeditationWritingDialog(
-                selectedVerses: meditation.verses,
-                initialContent: meditation.content,
-                initialColor: meditation.highlightColor,
-              ),
-            );
-
-            if (content == null || content.isEmpty) {
-              print('❌ 내용 수정 취소됨');
-              return;
-            }
-            print('📝 새 내용: $content');
-
-            // 2단계: 색상 선택
-            final color = await showDialog<String>(
-              context: dialogContext,
-              builder: (editContext2) => const ColorSelectionDialog(),
-            ).catchError((e) {
-              print('⚠️ 색상 선택 다이얼로그 오류 (무시): $e');
-              return null;
-            });
-
-            if (color == null) {
-              print('❌ 색상 선택 취소됨');
-              return;
-            }
-            print('🎨 선택된 색상: $color');
-
-            // 3단계: 수정 확인 다이얼로그
+            // 1단계: 먼저 수정 확인 다이얼로그
             final confirm = await showDialog<bool>(
               context: dialogContext,
               builder: (confirmContext) => AlertDialog(
                 title: const Text('묵상 수정'),
-                content: const Text('정말 수정하시겠습니까?\n기존 묵상이 삭제되고 새로 저장됩니다.'),
+                content: const Text('정말 수정하시겠습니까?\n기존 묵상이 삭제되고 새로 작성하실 수 있습니다.'),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(confirmContext, false),
@@ -822,27 +797,81 @@ Widget _buildCopyButtonOnly() {
                   ),
                 ],
               ),
-            ).catchError((e) {
-              print('⚠️ 확인 다이얼로그 오류 (무시): $e');
-              return null;
-            });
+            );
 
             if (confirm != true) {
-              print('❌ 수정 확인 취소됨');
+              print('❌ 수정 취소됨');
               return;
             }
 
-            print('💾 저장 시작...');
+            // 2단계: 기존 묵상 데이터 복사
+            final oldVerses = meditation.verses;
+            final oldContent = meditation.content;
+            final oldColor = meditation.highlightColor;
+            print('📋 기존 데이터 복사 완료');
 
-            // 4단계: 기존 묵상 삭제
+            // 3단계: 기존 묵상 삭제
             await meditationService.deleteMeditation(userId, meditation.id);
+            await _loadMeditations();
             print('🗑️ 기존 묵상 삭제 완료');
 
-            // 5단계: 새 묵상으로 저장
+            // 4단계: 묵상 조회 다이얼로그 닫기
+            Navigator.pop(dialogContext);
+
+            // 잠시 대기 (UI 업데이트 시간 확보)
+            await Future.delayed(const Duration(milliseconds: 100));
+
+            if (!mounted) return;
+
+            // 5단계: 새 묵상 작성 다이얼로그 (기존 내용으로 미리 채움)
+            final content = await showDialog<String>(
+              context: context,
+              builder: (newContext) => MeditationWritingDialog(
+                selectedVerses: oldVerses,
+                initialContent: oldContent,
+                initialColor: oldColor,
+              ),
+            );
+
+            if (content == null || content.isEmpty) {
+              print('❌ 새 묵상 작성 취소됨 - 원본 묵상은 이미 삭제됨');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('묵상 작성이 취소되었습니다'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+              return;
+            }
+            print('📝 새 내용 작성 완료: $content');
+
+            // 6단계: 색상 선택
+            final color = await showDialog<String>(
+              context: context,
+              builder: (colorContext) => const ColorSelectionDialog(),
+            );
+
+            if (color == null) {
+              print('❌ 색상 선택 취소됨 - 묵상 저장하지 않음');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('색상 선택이 취소되었습니다'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+              return;
+            }
+            print('🎨 선택된 색상: $color');
+
+            // 7단계: 새 묵상으로 저장
             final newMeditation = Meditation(
               id: meditationService.generateId(),
               userId: userId,
-              verses: meditation.verses,
+              verses: oldVerses,
               content: content,
               highlightColor: color,
               createdAt: DateTime.now(),
@@ -852,16 +881,9 @@ Widget _buildCopyButtonOnly() {
             await meditationService.saveMeditation(newMeditation);
             print('✅ 새 묵상 저장 완료: ${newMeditation.id}');
 
-            // 6단계: 하이라이트 새로고침
+            // 8단계: 하이라이트 새로고침
             await _loadMeditations();
             print('✅ 하이라이트 업데이트 완료');
-
-            // 다이얼로그 닫기 (안전하게)
-            try {
-              Navigator.pop(dialogContext);
-            } catch (e) {
-              print('⚠️ 다이얼로그 닫기 실패 (무시): $e');
-            }
 
             if (mounted) {
               // 성공 메시지
@@ -900,7 +922,7 @@ Widget _buildCopyButtonOnly() {
   Future<void> _copySelectedVerses() async {
     showDialog(
       context: context,
-      builder: (context) => CopyDialog(
+      builder: (dialogContext) => CopyDialog(
         onFormatSelected: (format) async {
           String formatted = '';
 
@@ -913,6 +935,9 @@ Widget _buildCopyButtonOnly() {
           }
 
           await Clipboard.setData(ClipboardData(text: formatted));
+
+          // 다이얼로그 닫기
+          Navigator.pop(dialogContext);
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -1054,6 +1079,32 @@ Widget _buildCopyButtonOnly() {
     }
 
     return BibleService().formatSelectedVersesCompare(allSelected);
+  }
+
+  // 성경 선택 다이얼로그 표시
+  Future<void> _showBibleSelectionDialog() async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => const BibleSelectionDialog(),
+    );
+
+    if (result != null && mounted) {
+      // 선택된 책/장/절로 성경 읽기 화면 이동
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BibleReaderScreen(
+            bookShort: result['book'],
+            bookName: result['bookName'],
+            bookEng: result['bookEng'],
+            initialChapter: result['chapter'],
+          ),
+        ),
+      ).then((_) {
+        // 성경 읽기 화면에서 돌아왔을 때 묵상 다시 로드
+        _loadMeditations();
+      });
+    }
   }
 
   @override
