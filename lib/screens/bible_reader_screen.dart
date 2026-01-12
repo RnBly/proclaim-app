@@ -65,6 +65,9 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
   late AnimationController _expandController;
   late Animation<double> _expandAnimation;
 
+  // 페이지 컨트롤러 (좌우 스와이프용)
+  late PageController _pageController;
+
   // 스크롤 컨트롤러
   final ScrollController _scrollController = ScrollController();
   final Map<int, GlobalKey> _verseKeys = {};
@@ -79,6 +82,9 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
       (book) => book.koreanShort == widget.bookShort,
       orElse: () => BibleBook.getAllBooks().first,
     );
+
+    // PageController 초기화 (현재 장 -1 = 인덱스)
+    _pageController = PageController(initialPage: _currentChapter - 1);
 
     _loadSavedPreferences();
     _loadMeditations();
@@ -206,52 +212,47 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
             icon: const Icon(Icons.settings, color: Colors.black87),
             onPressed: _showSettingsDialog,
           ),
-          IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: _currentChapter > 1 ? Colors.black87 : Colors.grey[300],
-            ),
-            onPressed: _currentChapter > 1 ? _previousChapter : null,
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.arrow_forward_ios,
-              color: _currentChapter < _currentBook.totalChapters
-                  ? Colors.black87
-                  : Colors.grey[300],
-            ),
-            onPressed: _currentChapter < _currentBook.totalChapters
-                ? _nextChapter
-                : null,
-          ),
         ],
       ),
-      body: _buildChapterContent(),
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: _currentBook.totalChapters,
+        onPageChanged: (pageIndex) {
+          setState(() {
+            _currentChapter = pageIndex + 1;
+            _selectedVerses.clear(); // 장이 바뀌면 선택 초기화
+          });
+        },
+        itemBuilder: (context, index) {
+          final chapter = index + 1;
+          return _buildChapterContentForPage(chapter);
+        },
+      ),
       floatingActionButton: _hasSelectedVerses()
           ? _buildFloatingButtons()
           : null,
     );
   }
 
-  // 장 내용 표시
-  Widget _buildChapterContent() {
+  // 장 내용 표시 (PageView용)
+  Widget _buildChapterContentForPage(int chapter) {
     // 번역본에 따라 다른 뷰 표시
     switch (_currentTranslation) {
       case Translation.korean:
-        return _buildKoreanView();
+        return _buildKoreanView(chapter);
       case Translation.esv:
-        return _buildEsvView();
+        return _buildEsvView(chapter);
       case Translation.compare:
-        return _buildCompareView();
+        return _buildCompareView(chapter);
     }
   }
 
   // 한글 번역본 뷰
-  Widget _buildKoreanView() {
+  Widget _buildKoreanView(int chapter) {
     final verses = BibleService().getVerses(
       _currentBook.koreanShort,
-      _currentChapter,
-      _currentChapter,
+      chapter,
+      chapter,
     );
 
     if (verses.isEmpty) {
@@ -285,7 +286,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
                 if (highlightColor != null) {
                   _viewMeditation(
                     _currentBook.koreanShort,
-                    _currentChapter,
+                    chapter,
                     verse.verseNumber,
                   );
                 }
@@ -347,7 +348,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
                         child: GestureDetector(
                           onTap: () => _viewMeditation(
                             _currentBook.koreanShort,
-                            _currentChapter,
+                            chapter,
                             verse.verseNumber,
                           ),
                           child: Container(
@@ -379,11 +380,11 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
   }
 
   // ESV 번역본 뷰
-  Widget _buildEsvView() {
+  Widget _buildEsvView(int chapter) {
     final verses = BibleService().getEsvVerses(
       _currentBook.englishShort,
-      _currentChapter,
-      _currentChapter,
+      chapter,
+      chapter,
     );
 
     if (verses.isEmpty) {
@@ -404,7 +405,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: verses.map((verse) {
-          final key = '${_currentBook.koreanShort}-${_currentChapter}-${verse.verseNumber}';
+          final key = '${_currentBook.koreanShort}-$chapter-${verse.verseNumber}';
           final isSelected = _selectedVerses.contains(key);
           final highlightColor = _highlightedVerses[key];
 
@@ -417,7 +418,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
                 if (highlightColor != null) {
                   _viewMeditation(
                     _currentBook.koreanShort,
-                    _currentChapter,
+                    chapter,
                     verse.verseNumber,
                   );
                 }
@@ -477,7 +478,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
                         child: GestureDetector(
                           onTap: () => _viewMeditation(
                             _currentBook.koreanShort,
-                            _currentChapter,
+                            chapter,
                             verse.verseNumber,
                           ),
                           child: Container(
@@ -509,17 +510,18 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
   }
 
   // 역본대조 뷰
-  Widget _buildCompareView() {
+  // 역본대조 뷰
+  Widget _buildCompareView(int chapter) {
     final koreanVerses = BibleService().getVerses(
       _currentBook.koreanShort,
-      _currentChapter,
-      _currentChapter,
+      chapter,
+      chapter,
     );
 
     final esvVerses = BibleService().getEsvVerses(
       _currentBook.englishShort,
-      _currentChapter,
-      _currentChapter,
+      chapter,
+      chapter,
     );
 
     if (koreanVerses.isEmpty || esvVerses.isEmpty) {
@@ -556,7 +558,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
                 if (highlightColor != null) {
                   _viewMeditation(
                     _currentBook.koreanShort,
-                    _currentChapter,
+                    chapter,
                     koreanVerse.verseNumber,
                   );
                 }
@@ -631,7 +633,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
                         child: GestureDetector(
                           onTap: () => _viewMeditation(
                             _currentBook.koreanShort,
-                            _currentChapter,
+                            chapter,
                             koreanVerse.verseNumber,
                           ),
                           child: Container(
@@ -1277,6 +1279,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
   void dispose() {
     _expandController.dispose();
     _scrollController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 }
