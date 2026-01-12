@@ -924,6 +924,9 @@ Widget _buildCopyButtonOnly() {
       context: context,
       builder: (dialogContext) => CopyDialog(
         onFormatSelected: (format) async {
+          // 다이얼로그 먼저 닫기
+          Navigator.pop(dialogContext);
+
           String formatted = '';
 
           if (format == CopyFormat.korean) {
@@ -935,9 +938,6 @@ Widget _buildCopyButtonOnly() {
           }
 
           await Clipboard.setData(ClipboardData(text: formatted));
-
-          // 다이얼로그 닫기
-          Navigator.pop(dialogContext);
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

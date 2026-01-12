@@ -34,6 +34,7 @@ class BibleReaderScreen extends StatefulWidget {
   final String bookName;       // 예: "창세기"
   final String bookEng;        // 예: "Gen"
   final int initialChapter;    // 시작 장
+  final int? initialVerse;     // 시작 절 (선택사항)
 
   const BibleReaderScreen({
     super.key,
@@ -41,6 +42,7 @@ class BibleReaderScreen extends StatefulWidget {
     required this.bookName,
     required this.bookEng,
     required this.initialChapter,
+    this.initialVerse,
   });
 
   @override
@@ -90,6 +92,13 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
       parent: _expandController,
       curve: Curves.easeInOut,
     );
+
+    // 초기 절로 스크롤 (build 후)
+    if (widget.initialVerse != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToVerse(widget.initialVerse!);
+      });
+    }
   }
 
   void _loadSavedPreferences() {
@@ -826,8 +835,11 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
   Future<void> _copySelectedVerses() async {
     showDialog(
       context: context,
-      builder: (context) => CopyDialog(
+      builder: (dialogContext) => CopyDialog(
         onFormatSelected: (format) async {
+          // 다이얼로그 먼저 닫기
+          Navigator.pop(dialogContext);
+
           String formatted = '';
 
           if (format == CopyFormat.korean) {

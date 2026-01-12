@@ -59,7 +59,6 @@ class CopyDialog extends StatelessWidget {
   Widget _buildFormatOption(BuildContext context, String label, CopyFormat format) {
     return GestureDetector(
       onTap: () {
-        Navigator.pop(context);
         onFormatSelected(format);
       },
       child: Container(
