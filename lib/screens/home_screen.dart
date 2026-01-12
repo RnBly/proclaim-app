@@ -987,7 +987,10 @@ Widget _buildCopyButtonOnly() {
       }
     }
 
-    return BibleService().formatSelectedVerses(allSelected);
+    final formattedText = BibleService().formatSelectedVerses(allSelected);
+    
+    // 앱 링크 추가
+    return '$formattedText\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
   Future<String> _getEsvFormat() async {
@@ -1033,7 +1036,10 @@ Widget _buildCopyButtonOnly() {
       }
     }
 
-    return BibleService().formatSelectedVersesEsv(allSelected);
+    final formattedText = BibleService().formatSelectedVersesEsv(allSelected);
+    
+    // 앱 링크 추가
+    return '$formattedText\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
   Future<String> _getCompareFormat() async {
@@ -1078,7 +1084,10 @@ Widget _buildCopyButtonOnly() {
       }
     }
 
-    return BibleService().formatSelectedVersesCompare(allSelected);
+    final formattedText = BibleService().formatSelectedVersesCompare(allSelected);
+    
+    // 앱 링크 추가
+    return '$formattedText\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
   // 성경 선택 다이얼로그 표시

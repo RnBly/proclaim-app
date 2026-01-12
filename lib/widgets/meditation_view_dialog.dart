@@ -206,7 +206,9 @@ class _MeditationViewDialogState extends State<MeditationViewDialog> {
     print('📝 BibleService().formatSelectedVerses 호출');
     final result = BibleService().formatSelectedVerses(selectedVerses);
     print('📝 포맷팅 결과 길이: ${result.length}');
-    return result;
+    
+    // 앱 링크 추가
+    return '$result\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
   // 영어 버전 포맷팅
@@ -241,7 +243,10 @@ class _MeditationViewDialogState extends State<MeditationViewDialog> {
       }
     }
 
-    return BibleService().formatSelectedVersesEsv(selectedVerses);
+    final result = BibleService().formatSelectedVersesEsv(selectedVerses);
+    
+    // 앱 링크 추가
+    return '$result\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
   // 대조 버전 포맷팅
@@ -275,7 +280,10 @@ class _MeditationViewDialogState extends State<MeditationViewDialog> {
       ));
     }
 
-    return BibleService().formatSelectedVersesCompare(selectedVerses);
+    final result = BibleService().formatSelectedVersesCompare(selectedVerses);
+    
+    // 앱 링크 추가
+    return '$result\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
   @override
