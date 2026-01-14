@@ -71,6 +71,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
   // 스크롤 컨트롤러
   final ScrollController _scrollController = ScrollController();
   final Map<int, GlobalKey> _verseKeys = {};
+  double _scrollProgress = 0.0; // 스크롤 진행률 (0.0 ~ 1.0);
 
   @override
   void initState() {
@@ -99,6 +100,9 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
       curve: Curves.easeInOut,
     );
 
+    // 스크롤 리스너 추가
+    _scrollController.addListener(_updateScrollProgress);
+
     // 초기 절로 스크롤 (build 후)
     if (widget.initialVerse != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -122,6 +126,16 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
         _currentTranslation = Translation.compare;
       }
     });
+  }
+
+  void _updateScrollProgress() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+      setState(() {
+        _scrollProgress = maxScroll > 0 ? currentScroll / maxScroll : 0.0;
+      });
+    }
   }
 
   Future<void> _loadMeditations() async {
@@ -734,20 +748,22 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
             ),
           ),
 
-        // 메인 버튼 (+ 또는 X)
-        FloatingActionButton(
-          heroTag: 'main',
-          onPressed: () {
-            setState(() {
-              _isExpanded = !_isExpanded;
-              if (_isExpanded) {
-                _expandController.forward();
-              } else {
-                _expandController.reverse();
-              }
-            });
-          },
-          backgroundColor: _isExpanded ? Colors.grey : Colors.blue[700],
+        // 메인 버튼 (+ 또는 X) - 스크롤 90% 이상에서 반투명
+        Opacity(
+          opacity: _scrollProgress >= 0.9 ? 0.4 : 1.0,
+          child: FloatingActionButton(
+            heroTag: 'main',
+            onPressed: () {
+              setState(() {
+                _isExpanded = !_isExpanded;
+                if (_isExpanded) {
+                  _expandController.forward();
+                } else {
+                  _expandController.reverse();
+                }
+              });
+            },
+            backgroundColor: _isExpanded ? Colors.grey : Colors.blue[700],
           elevation: 6.0,
           child: _isExpanded
               ? const Icon(Icons.close, color: Colors.white, size: 32)
@@ -763,6 +779,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
                     ),
                   ),
                 ),
+          ),
         ),
       ],
     );
@@ -825,7 +842,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
           key.currentContext!,
           duration: const Duration(milliseconds: 500),
           curve: Curves.easeInOut,
-          alignment: 0.0, // 맨 위에 위치
+          alignment: 0.1, // 상단에서 10% 위치 (앱바 영역 고려)
         );
       }
     });
@@ -1277,6 +1294,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
 
   @override
   void dispose() {
+    _scrollController.removeListener(_updateScrollProgress);
     _expandController.dispose();
     _scrollController.dispose();
     _pageController.dispose();

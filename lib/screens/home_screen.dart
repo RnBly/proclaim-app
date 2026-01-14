@@ -36,7 +36,9 @@ import '../widgets/meditation_writing_dialog.dart';
 import '../widgets/color_selection_dialog.dart';
 import '../widgets/meditation_view_dialog.dart';
 import '../widgets/bible_selection_dialog.dart';
+import '../widgets/reading_mode_dialog.dart';
 import 'bible_reader_screen.dart';
+import 'monthly_reading_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -1090,27 +1092,49 @@ Widget _buildCopyButtonOnly() {
     return '$formattedText\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
-  // 성경 선택 다이얼로그 표시
+  // 읽기 모드 선택 다이얼로그 표시
   Future<void> _showBibleSelectionDialog() async {
-    final result = await showDialog<Map<String, dynamic>>(
+    // 먼저 읽기 모드 선택
+    final mode = await showDialog<String>(
       context: context,
-      builder: (context) => const BibleSelectionDialog(),
+      builder: (context) => const ReadingModeDialog(),
     );
 
-    if (result != null && mounted) {
-      // 선택된 책/장/절로 성경 읽기 화면 이동
+    if (mode == null || !mounted) return;
+
+    if (mode == 'daily') {
+      // 일일 묵상: 기존 성경 선택 다이얼로그
+      final result = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (context) => const BibleSelectionDialog(),
+      );
+
+      if (result != null && mounted) {
+        // 선택된 책/장/절로 성경 읽기 화면 이동
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BibleReaderScreen(
+              bookShort: result['book'],
+              bookName: result['bookName'],
+              bookEng: result['bookEng'],
+              initialChapter: result['chapter'],
+            ),
+          ),
+        ).then((_) {
+          // 성경 읽기 화면에서 돌아왔을 때 묵상 다시 로드
+          _loadMeditations();
+        });
+      }
+    } else if (mode == 'monthly') {
+      // 한 달 통독: 한 달 통독 화면으로 이동
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => BibleReaderScreen(
-            bookShort: result['book'],
-            bookName: result['bookName'],
-            bookEng: result['bookEng'],
-            initialChapter: result['chapter'],
-          ),
+          builder: (context) => const MonthlyReadingScreen(),
         ),
       ).then((_) {
-        // 성경 읽기 화면에서 돌아왔을 때 묵상 다시 로드
+        // 화면에서 돌아왔을 때 묵상 다시 로드
         _loadMeditations();
       });
     }

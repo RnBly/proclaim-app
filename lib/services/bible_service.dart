@@ -42,6 +42,10 @@ class BibleService {
   List<BibleReading>? _oldTestamentData;
   List<BibleReading>? _psalmsData;
   List<BibleReading>? _newTestamentData;
+  
+  // 한 달 통독 데이터
+  List<BibleReading>? _monthlyReadingData;
+  List<BibleReading>? _monthlyPsalmsData;
 
   Future<void> initialize() async {
     print('🚀 Initializing Bible Service...');
@@ -84,6 +88,78 @@ class BibleService {
     print('  ✓ Psalms: ${_psalmsData?.length ?? 0} entries');
     print('  ✓ New Testament: ${_newTestamentData?.length ?? 0} entries');
   }
+
+  // ===== 한 달 통독 데이터 로드 =====
+  
+  Future<void> loadMonthlyReadingPlan() async {
+    if (_monthlyReadingData != null && _monthlyPsalmsData != null) {
+      print('✅ Monthly reading plan already loaded');
+      return;
+    }
+
+    print('📊 Loading monthly reading plan from Google Sheets...');
+
+    try {
+      final results = await Future.wait([
+        _fetchSheetAsCsv(Secrets.MONTHLY_READING_SHEET),
+        _fetchSheetAsCsv(Secrets.MONTHLY_PSALMS_SHEET),
+      ]);
+
+      _monthlyReadingData = _parseCsvData(results[0]);
+      _monthlyPsalmsData = _parseCsvData(results[1]);
+
+      print('  ✓ Monthly Reading: ${_monthlyReadingData?.length ?? 0} entries');
+      print('  ✓ Monthly Psalms: ${_monthlyPsalmsData?.length ?? 0} entries');
+    } catch (e) {
+      print('⚠️ Failed to load monthly reading plan: $e');
+      _monthlyReadingData = [];
+      _monthlyPsalmsData = [];
+    }
+  }
+
+  // 날짜를 기준으로 한 달 통독 본문 가져오기 (1~30일)
+  // 한 날짜에 여러 책이 있을 수 있으므로 리스트로 반환
+  List<BibleReading> getAllMonthlyReadings(DateTime date) {
+    if (_monthlyReadingData == null || _monthlyReadingData!.isEmpty) {
+      return [];
+    }
+    
+    int dayOfMonth = date.day;
+    if (dayOfMonth > 30) dayOfMonth = 30;
+    
+    // 같은 날짜의 모든 reading 찾기
+    final results = <BibleReading>[];
+    for (var reading in _monthlyReadingData!) {
+      // date 필드가 "14" 또는 "14일" 같은 형식일 수 있음
+      final readingDay = int.tryParse(reading.date.replaceAll(RegExp(r'[^0-9]'), ''));
+      if (readingDay == dayOfMonth) {
+        results.add(reading);
+      }
+    }
+    
+    return results;
+  }
+
+  List<BibleReading> getAllMonthlyPsalms(DateTime date) {
+    if (_monthlyPsalmsData == null || _monthlyPsalmsData!.isEmpty) {
+      return [];
+    }
+    
+    int dayOfMonth = date.day;
+    if (dayOfMonth > 30) dayOfMonth = 30;
+    
+    // 같은 날짜의 모든 reading 찾기
+    final results = <BibleReading>[];
+    for (var reading in _monthlyPsalmsData!) {
+      final readingDay = int.tryParse(reading.date.replaceAll(RegExp(r'[^0-9]'), ''));
+      if (readingDay == dayOfMonth) {
+        results.add(reading);
+      }
+    }
+    
+    return results;
+  }
+
 
   Future<String> _fetchSheetAsCsv(String sheetName) async {
     final url = Secrets.getSheetCsvUrl(sheetName);
@@ -402,6 +478,12 @@ class BibleService {
       case 'new':
         data = _newTestamentData;
         break;
+      case 'monthly':
+        // 한 달 통독의 경우 날짜의 일(day)을 기준으로 가져오기
+        return getAllMonthlyReadings(date);
+      case 'monthly_psalms':
+        // 한 달 통독 시편의 경우 날짜의 일(day)을 기준으로 가져오기
+        return getAllMonthlyPsalms(date);
     }
 
     if (data == null || data.isEmpty) {
