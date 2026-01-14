@@ -36,6 +36,8 @@ jobs:
             static const String OLD_TESTAMENT_SHEET = 'Old Testament';
             static const String PSALMS_SHEET = 'Psalms';
             static const String NEW_TESTAMENT_SHEET = 'New Testament';
+            static const String MONTHLY_READING_SHEET = '1month';
+            static const String MONTHLY_PSALMS_SHEET = '1month_ps';
           
             // GitHub URLs
             static const String BIBLE_JSON_URL = 
