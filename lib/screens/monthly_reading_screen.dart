@@ -21,8 +21,11 @@ import '../models/meditation.dart';
 import '../widgets/bible_page.dart';
 import '../widgets/translation_dialog.dart';
 import '../widgets/meditation_writing_dialog.dart';
+import '../widgets/meditation_view_dialog.dart';
 import '../widgets/color_selection_dialog.dart';
+import '../widgets/verse_selection_dialog.dart';
 import '../widgets/copy_dialog.dart';
+import '../widgets/settings_dialog.dart';
 import '../widgets/date_picker_dialog.dart' as custom;
 import 'login_screen.dart';
 
@@ -61,6 +64,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
     super.initState();
     _loadSavedPreferences();
     _loadMonthlyReadingPlan();
+    _loadMeditations();
 
     // 버튼 확장 애니메이션 설정
     _expandController = AnimationController(
@@ -92,6 +96,31 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
   Future<void> _loadMonthlyReadingPlan() async {
     await BibleService().loadMonthlyReadingPlan();
     setState(() {});
+  }
+
+  Future<void> _loadMeditations() async {
+    final authService = AuthService();
+    final userId = authService.getUserId();
+
+    if (userId == null) return;
+
+    final meditationService = MeditationService();
+    final meditations = await meditationService.getMeditations(userId);
+
+    final Map<String, String> highlights = {};
+    for (var meditation in meditations) {
+      for (var verse in meditation.verses) {
+        final key = '${verse.book}-${verse.chapter}-${verse.verse}';
+        highlights[key] = meditation.highlightColor;
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _highlightedVerses.clear();
+        _highlightedVerses.addAll(highlights);
+      });
+    }
   }
 
   void _showDatePicker() {
@@ -130,6 +159,41 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
           } else if (translation == Translation.compare) {
             prefs.saveTranslation('compare');
           }
+        },
+      ),
+    );
+  }
+
+  void _showSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => SettingsDialog(
+        currentTranslation: _currentTranslation,
+        currentTitleFontSize: _titleFontSize,
+        currentBodyFontSize: _bodyFontSize,
+        onTranslationChanged: (translation) {
+          setState(() {
+            _currentTranslation = translation;
+            _selectedVerses['monthly']!.clear();
+            _selectedVerses['monthly_psalms']!.clear();
+          });
+          final prefs = PreferencesService();
+          if (translation == Translation.korean) {
+            prefs.saveTranslation('korean');
+          } else if (translation == Translation.esv) {
+            prefs.saveTranslation('esv');
+          } else if (translation == Translation.compare) {
+            prefs.saveTranslation('compare');
+          }
+        },
+        onFontSizeChanged: (titleSize, bodySize) {
+          setState(() {
+            _titleFontSize = titleSize;
+            _bodyFontSize = bodySize;
+          });
+          final prefs = PreferencesService();
+          prefs.saveTitleFontSize(titleSize);
+          prefs.saveBodyFontSize(bodySize);
         },
       ),
     );
@@ -175,41 +239,9 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
                 ),
               ),
             ),
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.translate, color: Colors.black87),
-                  onPressed: _showTranslationDialog,
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.arrow_back_ios,
-                    color: _currentPage > 0 ? Colors.black87 : Colors.grey[300],
-                  ),
-                  onPressed: _currentPage > 0
-                      ? () {
-                          _pageController.previousPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        }
-                      : null,
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.arrow_forward_ios,
-                    color: _currentPage < 1 ? Colors.black87 : Colors.grey[300],
-                  ),
-                  onPressed: _currentPage < 1
-                      ? () {
-                          _pageController.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        }
-                      : null,
-                ),
-              ],
+            IconButton(
+              icon: const Icon(Icons.settings, color: Colors.black87),
+              onPressed: _showSettingsDialog,
             ),
           ],
         ),
@@ -533,24 +565,74 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
   Future<void> _showMeditationWritingDialog() async {
     final sheetType = _currentPage == 0 ? 'monthly' : 'monthly_psalms';
-    final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
     
-    if (readings.isEmpty) return;
+    // 선택된 구절들을 VerseReference로 변환
+    final verses = await _getSelectedVerseReferences(sheetType);
 
-    // 선택된 구절들의 본문 가져오기
-    final List<VerseReference> selectedVersesList = [];
-    
+    if (verses.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('선택된 구절이 없습니다'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    // 1단계: 묵상 절 선택 다이얼로그
+    final selectedVerses = await showDialog<List<VerseReference>>(
+      context: context,
+      builder: (context) => VerseSelectionDialog(
+        availableVerses: verses,
+      ),
+    );
+
+    if (selectedVerses == null || selectedVerses.isEmpty) return;
+
+    if (!mounted) return;
+
+    // 2단계: 묵상 기록 작성 다이얼로그
+    final content = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => MeditationWritingDialog(
+        selectedVerses: selectedVerses,
+      ),
+    );
+
+    if (content == null || content.isEmpty) return;
+
+    if (!mounted) return;
+
+    // 3단계: 색상 선택
+    final color = await showDialog<String>(
+      context: context,
+      builder: (context) => const ColorSelectionDialog(),
+    );
+
+    if (color == null) return;
+
+    // 4단계: 묵상 저장
+    await _saveMeditation(selectedVerses, content, color);
+  }
+
+  // 선택된 구절들을 VerseReference로 변환
+  Future<List<VerseReference>> _getSelectedVerseReferences(String sheetType) async {
+    final List<VerseReference> verses = [];
+    final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
+
     for (var reading in readings) {
-      final verses = BibleService().getVerses(
+      final koreanVerses = BibleService().getVerses(
         reading.book,
         reading.startChapter,
         reading.endChapter,
         verseRange: reading.verseRange,
       );
 
-      for (var verse in verses) {
+      for (var verse in koreanVerses) {
         if (_selectedVerses[sheetType]!.contains(verse.key)) {
-          selectedVersesList.add(VerseReference(
+          verses.add(VerseReference(
             book: verse.book,
             chapter: verse.chapter,
             verse: verse.verseNumber,
@@ -560,30 +642,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
       }
     }
 
-    if (selectedVersesList.isEmpty) return;
-
-    // 1단계: 묵상 내용 작성
-    final content = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => MeditationWritingDialog(
-        selectedVerses: selectedVersesList,
-      ),
-    );
-
-    if (content == null || content.isEmpty) return;
-
-    if (!mounted) return;
-
-    // 2단계: 색상 선택
-    final color = await showDialog<String>(
-      context: context,
-      builder: (context) => const ColorSelectionDialog(),
-    );
-
-    if (color == null) return;
-
-    // 3단계: 묵상 저장
-    await _saveMeditation(selectedVersesList, content, color);
+    return verses;
   }
 
   Future<void> _saveMeditation(
@@ -619,6 +678,9 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
     await meditationService.saveMeditation(meditation);
 
+    // 하이라이트 새로고침
+    await _loadMeditations();
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -632,6 +694,188 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
         _selectedVerses[_currentPage == 0 ? 'monthly' : 'monthly_psalms']!.clear();
       });
     }
+  }
+
+  Future<void> _viewMeditation(String book, int chapter, int verse) async {
+    final authService = AuthService();
+    final userId = authService.getUserId();
+
+    if (userId == null) return;
+
+    final meditationService = MeditationService();
+    final meditations = await meditationService.getMeditationsByVerse(
+      userId,
+      book,
+      chapter,
+      verse,
+    );
+
+    if (meditations.isEmpty) return;
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => MeditationViewDialog(
+        meditations: meditations,
+        initialIndex: 0,
+        onDelete: (meditationId) async {
+          if (!mounted) return;
+
+          final confirm = await showDialog<bool>(
+            context: dialogContext,
+            builder: (deleteContext) => AlertDialog(
+              title: const Text('묵상 삭제'),
+              content: const Text('이 묵상을 삭제하시겠습니까?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(deleteContext, false),
+                  child: const Text('취소'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(deleteContext, true),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.red,
+                  ),
+                  child: const Text('삭제'),
+                ),
+              ],
+            ),
+          );
+
+          if (confirm == true) {
+            await meditationService.deleteMeditation(userId, meditationId);
+            await _loadMeditations();
+
+            if (mounted) {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('묵상이 삭제되었습니다'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          }
+        },
+        onEdit: (meditation) async {
+          try {
+            final confirm = await showDialog<bool>(
+              context: dialogContext,
+              builder: (confirmContext) => AlertDialog(
+                title: const Text('묵상 수정'),
+                content: const Text('정말 수정하시겠습니까?\n기존 묵상이 삭제되고 새로 작성하실 수 있습니다.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(confirmContext, false),
+                    child: const Text('취소'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(confirmContext, true),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFFCE6E26),
+                    ),
+                    child: const Text('확인'),
+                  ),
+                ],
+              ),
+            );
+
+            if (confirm != true) return;
+
+            final oldVerses = meditation.verses;
+            final oldContent = meditation.content;
+            final oldColor = meditation.highlightColor;
+
+            await meditationService.deleteMeditation(userId, meditation.id);
+            await _loadMeditations();
+
+            Navigator.pop(dialogContext);
+            await Future.delayed(const Duration(milliseconds: 100));
+
+            if (!mounted) return;
+
+            final content = await showDialog<String>(
+              context: context,
+              builder: (newContext) => MeditationWritingDialog(
+                selectedVerses: oldVerses,
+                initialContent: oldContent,
+                initialColor: oldColor,
+              ),
+            );
+
+            if (content == null || content.isEmpty) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('묵상 작성이 취소되었습니다'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+              return;
+            }
+
+            if (!mounted) return;
+
+            final color = await showDialog<String>(
+              context: context,
+              builder: (colorContext) => const ColorSelectionDialog(),
+            );
+
+            if (color == null) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('색상 선택이 취소되었습니다'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+              return;
+            }
+
+            final newMeditation = Meditation(
+              id: meditationService.generateId(),
+              userId: userId,
+              verses: oldVerses,
+              content: content,
+              highlightColor: color,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            );
+
+            await meditationService.saveMeditation(newMeditation);
+            await _loadMeditations();
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('묵상이 수정되었습니다'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+
+              await Future.delayed(const Duration(milliseconds: 300));
+
+              if (mounted) {
+                _viewMeditation(book, chapter, verse);
+              }
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('오류 발생: $e'),
+                  duration: const Duration(seconds: 3),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
+      ),
+    );
   }
 
   void _showLoginPrompt() {
@@ -785,6 +1029,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
       selectedVerses: _selectedVerses['monthly']!,
       highlightedVerses: _highlightedVerses,
       onVerseToggle: _toggleVerse,
+      onMeditationView: _viewMeditation,
       titleFontSize: _titleFontSize,
       bodyFontSize: _bodyFontSize,
     );
@@ -799,6 +1044,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
       selectedVerses: _selectedVerses['monthly_psalms']!,
       highlightedVerses: _highlightedVerses,
       onVerseToggle: _toggleVerse,
+      onMeditationView: _viewMeditation,
       titleFontSize: _titleFontSize,
       bodyFontSize: _bodyFontSize,
     );

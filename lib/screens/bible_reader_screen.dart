@@ -23,6 +23,7 @@ import '../services/preferences_service.dart';
 import '../widgets/meditation_writing_dialog.dart';
 import '../widgets/meditation_view_dialog.dart';
 import '../widgets/color_selection_dialog.dart';
+import '../widgets/verse_selection_dialog.dart';
 import '../widgets/copy_dialog.dart';
 import '../widgets/settings_dialog.dart';
 import '../widgets/translation_dialog.dart';
@@ -106,7 +107,12 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
     // 초기 절로 스크롤 (build 후)
     if (widget.initialVerse != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToVerse(widget.initialVerse!);
+        // 충분한 지연을 두고 스크롤 (키가 완전히 생성될 시간 확보)
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            _scrollToVerse(widget.initialVerse!);
+          }
+        });
       });
     }
   }
@@ -835,17 +841,15 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
 
   // 특정 절로 스크롤
   void _scrollToVerse(int verseNumber) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final key = _verseKeys[verseNumber];
-      if (key != null && key.currentContext != null) {
-        Scrollable.ensureVisible(
-          key.currentContext!,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-          alignment: 0.1, // 상단에서 10% 위치 (앱바 영역 고려)
-        );
-      }
-    });
+    final key = _verseKeys[verseNumber];
+    if (key != null && key.currentContext != null) {
+      Scrollable.ensureVisible(
+        key.currentContext!,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+        alignment: 0.1, // 상단에서 10% 위치 (앱바 영역 고려)
+      );
+    }
   }
 
   void _showSettingsDialog() {
@@ -909,17 +913,43 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
       );
     }).toList();
 
-    // 1단계: 묵상 내용 작성
+    if (selectedVersesList.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('선택된 구절이 없습니다'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    // 1단계: 묵상 절 선택 다이얼로그
+    final selectedVerses = await showDialog<List<VerseReference>>(
+      context: context,
+      builder: (context) => VerseSelectionDialog(
+        availableVerses: selectedVersesList,
+      ),
+    );
+
+    if (selectedVerses == null || selectedVerses.isEmpty) return;
+
+    if (!mounted) return;
+
+    // 2단계: 묵상 내용 작성
     final content = await showDialog<String>(
       context: context,
       builder: (dialogContext) => MeditationWritingDialog(
-        selectedVerses: selectedVersesList,
+        selectedVerses: selectedVerses,
       ),
     );
 
     if (content == null || content.isEmpty) return;
 
-    // 2단계: 색상 선택
+    if (!mounted) return;
+
+    // 3단계: 색상 선택
     final color = await showDialog<String>(
       context: context,
       builder: (context) => const ColorSelectionDialog(),
@@ -927,8 +957,8 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
 
     if (color == null) return;
 
-    // 3단계: 묵상 저장
-    await _saveMeditation(selectedVersesList, content, color);
+    // 4단계: 묵상 저장
+    await _saveMeditation(selectedVerses, content, color);
   }
 
   // 묵상 저장
