@@ -812,15 +812,28 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
       
       // 같은 책의 다른 장으로 이동하는 경우
       if (result['book'] == _currentBook.koreanShort) {
+        final targetChapter = result['chapter'] as int;
+        
+        // ⭐ PageController로 해당 장 페이지로 이동
+        await _pageController.animateToPage(
+          targetChapter - 1, // 0-based index
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+        
         setState(() {
-          _currentChapter = result['chapter'];
+          _currentChapter = targetChapter;
           _selectedVerses.clear();
         });
         await _loadMeditations();
         
-        // 선택한 절로 스크롤
+        // ⭐ 선택한 절로 스크롤 (지연 시간 증가)
         if (targetVerse != null) {
-          _scrollToVerse(targetVerse);
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              _scrollToVerse(targetVerse);
+            }
+          });
         }
       } else {
         // 다른 책으로 이동하는 경우 - 새로운 BibleReaderScreen으로 교체
@@ -832,6 +845,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
               bookName: result['bookName'],
               bookEng: result['bookEng'],
               initialChapter: result['chapter'],
+              initialVerse: targetVerse,
             ),
           ),
         );
