@@ -201,7 +201,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
   void _toggleVerse(String key) {
     setState(() {
-      final sheetType = _currentPage == 0 ? 'monthly' : 'monthly_psalms';
+      final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
       if (_selectedVerses[sheetType]!.contains(key)) {
         _selectedVerses[sheetType]!.remove(key);
       } else {
@@ -254,9 +254,9 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildPageIndicator(0, '구·신약'),
+                _buildPageIndicator(0, '시편'),
                 const SizedBox(width: 8),
-                _buildPageIndicator(1, '시편'),
+                _buildPageIndicator(1, '구·신약'),
               ],
             ),
           ),
@@ -271,8 +271,8 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
                 });
               },
               children: [
-                _buildMonthlyReadingPage(),
                 _buildMonthlyPsalmsPage(),
+                _buildMonthlyReadingPage(),
               ],
             ),
           ),
@@ -428,7 +428,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
   Future<String> _getKoreanFormat() async {
     final List<SelectedVerse> allSelected = [];
 
-    final sheetType = _currentPage == 0 ? 'monthly' : 'monthly_psalms';
+    final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
     final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
     for (var reading in readings) {
@@ -461,7 +461,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
   Future<String> _getEsvFormat() async {
     final List<SelectedVerseEsv> allSelected = [];
 
-    final sheetType = _currentPage == 0 ? 'monthly' : 'monthly_psalms';
+    final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
     final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
     for (var reading in readings) {
@@ -511,7 +511,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
   Future<String> _getCompareFormat() async {
     final List<SelectedVerseCompare> allSelected = [];
 
-    final sheetType = _currentPage == 0 ? 'monthly' : 'monthly_psalms';
+    final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
     final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
     for (var reading in readings) {
@@ -564,7 +564,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
   }
 
   Future<void> _showMeditationWritingDialog() async {
-    final sheetType = _currentPage == 0 ? 'monthly' : 'monthly_psalms';
+    final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
     
     // 선택된 구절들을 VerseReference로 변환
     final verses = await _getSelectedVerseReferences(sheetType);
@@ -691,7 +691,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
       
       // 선택 초기화
       setState(() {
-        _selectedVerses[_currentPage == 0 ? 'monthly' : 'monthly_psalms']!.clear();
+        _selectedVerses[_currentPage == 0 ? 'monthly_psalms' : 'monthly']!.clear();
       });
     }
   }
