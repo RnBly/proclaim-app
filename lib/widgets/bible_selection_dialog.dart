@@ -15,14 +15,7 @@ import '../models/bible_book.dart';
 import '../services/bible_service.dart';
 
 class BibleSelectionDialog extends StatefulWidget {
-  final String? initialBook;     // 초기 선택 책 (약어)
-  final int? initialChapter;     // 초기 선택 장
-  
-  const BibleSelectionDialog({
-    super.key,
-    this.initialBook,
-    this.initialChapter,
-  });
+  const BibleSelectionDialog({super.key});
 
   @override
   State<BibleSelectionDialog> createState() => _BibleSelectionDialogState();
@@ -41,18 +34,9 @@ class _BibleSelectionDialogState extends State<BibleSelectionDialog> {
   @override
   void initState() {
     super.initState();
-    
-    // 초기값 설정: 전달받은 값이 있으면 사용, 없으면 창세기 1장
-    if (widget.initialBook != null) {
-      _selectedBook = _allBooks.firstWhere(
-        (book) => book.koreanShort == widget.initialBook,
-        orElse: () => _allBooks.first,
-      );
-    } else {
-      _selectedBook = _allBooks.first;
-    }
-    
-    _selectedChapter = widget.initialChapter ?? 1;
+    // 기본값: 창세기 1장으로 시작
+    _selectedBook = _allBooks.first;
+    _selectedChapter = 1;
     _loadVerseCount();
   }
 

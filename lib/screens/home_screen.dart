@@ -229,23 +229,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
           },
           children: [
             BiblePage(
-              sheetType: 'psalms',
-              selectedDate: _selectedDate,
-              translation: _currentTranslation,
-              selectedVerses: _selectedVerses['psalms']!,
-              highlightedVerses: _highlightedVerses,
-              onVerseToggle: (key) => _toggleVerse('psalms', key),
-              onMeditationView: _viewMeditation,
-              titleFontSize: _titleFontSize,
-              bodyFontSize: _bodyFontSize,
-            ),
-            BiblePage(
               sheetType: 'old',
               selectedDate: _selectedDate,
               translation: _currentTranslation,
               selectedVerses: _selectedVerses['old']!,
               highlightedVerses: _highlightedVerses,
               onVerseToggle: (key) => _toggleVerse('old', key),
+              onMeditationView: _viewMeditation,
+              titleFontSize: _titleFontSize,
+              bodyFontSize: _bodyFontSize,
+            ),
+            BiblePage(
+              sheetType: 'psalms',
+              selectedDate: _selectedDate,
+              translation: _currentTranslation,
+              selectedVerses: _selectedVerses['psalms']!,
+              highlightedVerses: _highlightedVerses,
+              onVerseToggle: (key) => _toggleVerse('psalms', key),
               onMeditationView: _viewMeditation,
               titleFontSize: _titleFontSize,
               bodyFontSize: _bodyFontSize,
@@ -963,7 +963,7 @@ Widget _buildCopyButtonOnly() {
   Future<String> _getKoreanFormat() async {
     final List<SelectedVerse> allSelected = [];
 
-    for (var sheetType in ['psalms', 'old', 'new']) {
+    for (var sheetType in ['old', 'psalms', 'new']) {
       final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
       for (var reading in readings) {
@@ -998,7 +998,7 @@ Widget _buildCopyButtonOnly() {
   Future<String> _getEsvFormat() async {
     final List<SelectedVerseEsv> allSelected = [];
 
-    for (var sheetType in ['psalms', 'old', 'new']) {
+    for (var sheetType in ['old', 'psalms', 'new']) {
       final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
       for (var reading in readings) {
@@ -1047,7 +1047,7 @@ Widget _buildCopyButtonOnly() {
   Future<String> _getCompareFormat() async {
     final List<SelectedVerseCompare> allSelected = [];
 
-    for (var sheetType in ['psalms', 'old', 'new']) {
+    for (var sheetType in ['old', 'psalms', 'new']) {
       final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
       for (var reading in readings) {
@@ -1103,22 +1103,29 @@ Widget _buildCopyButtonOnly() {
     if (mode == null || !mounted) return;
 
     if (mode == 'daily') {
-      // 일일 묵상: 바로 창세기 1장으로 이동 (1초 후 성경 선택 창 자동 표시)
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const BibleReaderScreen(
-            bookShort: '창',
-            bookName: '창세기',
-            bookEng: 'Genesis',
-            initialChapter: 1,
-            autoShowDialog: true,
+      // 일일 묵상: 기존 성경 선택 다이얼로그
+      final result = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (context) => const BibleSelectionDialog(),
+      );
+
+      if (result != null && mounted) {
+        // 선택된 책/장/절로 성경 읽기 화면 이동
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BibleReaderScreen(
+              bookShort: result['book'],
+              bookName: result['bookName'],
+              bookEng: result['bookEng'],
+              initialChapter: result['chapter'],
+            ),
           ),
-        ),
-      ).then((_) {
-        // 성경 읽기 화면에서 돌아왔을 때 묵상 다시 로드
-        _loadMeditations();
-      });
+        ).then((_) {
+          // 성경 읽기 화면에서 돌아왔을 때 묵상 다시 로드
+          _loadMeditations();
+        });
+      }
     } else if (mode == 'monthly') {
       // 한 달 통독: 한 달 통독 화면으로 이동
       Navigator.push(

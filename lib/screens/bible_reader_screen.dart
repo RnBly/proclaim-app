@@ -36,7 +36,6 @@ class BibleReaderScreen extends StatefulWidget {
   final String bookEng;        // 예: "Gen"
   final int initialChapter;    // 시작 장
   final int? initialVerse;     // 시작 절 (선택사항)
-  final bool autoShowDialog;   // 1초 후 자동으로 성경 선택 다이얼로그 표시 여부
 
   const BibleReaderScreen({
     super.key,
@@ -45,7 +44,6 @@ class BibleReaderScreen extends StatefulWidget {
     required this.bookEng,
     required this.initialChapter,
     this.initialVerse,
-    this.autoShowDialog = false,
   });
 
   @override
@@ -75,9 +73,6 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
   final ScrollController _scrollController = ScrollController();
   final Map<int, GlobalKey> _verseKeys = {};
   double _scrollProgress = 0.0; // 스크롤 진행률 (0.0 ~ 1.0);
-
-  // 성경 선택 다이얼로그 표시 가능 여부 (1초 후 true)
-  bool _canShowDialog = false;
 
   @override
   void initState() {
@@ -119,21 +114,6 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
           }
         });
       });
-    }
-
-    // autoShowDialog가 true면 1초 후 자동으로 성경 선택 다이얼로그 표시
-    if (widget.autoShowDialog) {
-      Future.delayed(const Duration(milliseconds: 1000), () {
-        if (mounted) {
-          setState(() {
-            _canShowDialog = true;
-          });
-          _showBibleSelectionDialog();
-        }
-      });
-    } else {
-      // autoShowDialog가 false면 즉시 선택 가능
-      _canShowDialog = true;
     }
   }
 
@@ -245,11 +225,8 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
         ),
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.menu_book, 
-              color: _canShowDialog ? Colors.black87 : Colors.grey[300],
-            ),
-            onPressed: _canShowDialog ? _showBibleSelectionDialog : null,
+            icon: const Icon(Icons.menu_book, color: Colors.black87),
+            onPressed: _showBibleSelectionDialog,
           ),
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.black87),
@@ -835,28 +812,15 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
       
       // 같은 책의 다른 장으로 이동하는 경우
       if (result['book'] == _currentBook.koreanShort) {
-        final targetChapter = result['chapter'] as int;
-        
-        // ⭐ PageController로 해당 장 페이지로 이동
-        await _pageController.animateToPage(
-          targetChapter - 1, // 0-based index
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-        
         setState(() {
-          _currentChapter = targetChapter;
+          _currentChapter = result['chapter'];
           _selectedVerses.clear();
         });
         await _loadMeditations();
         
-        // ⭐ 선택한 절로 스크롤 (지연 시간 증가)
+        // 선택한 절로 스크롤
         if (targetVerse != null) {
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              _scrollToVerse(targetVerse);
-            }
-          });
+          _scrollToVerse(targetVerse);
         }
       } else {
         // 다른 책으로 이동하는 경우 - 새로운 BibleReaderScreen으로 교체
@@ -868,7 +832,6 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
               bookName: result['bookName'],
               bookEng: result['bookEng'],
               initialChapter: result['chapter'],
-              initialVerse: targetVerse,
             ),
           ),
         );

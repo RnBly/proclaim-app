@@ -59,8 +59,6 @@ class CopyDialog extends StatelessWidget {
   Widget _buildFormatOption(BuildContext context, String label, CopyFormat format) {
     return GestureDetector(
       onTap: () {
-        print('🟡 CopyDialog 옵션 선택됨: $label ($format)');
-        // onFormatSelected만 호출 (Navigator.pop은 호출하는 쪽에서 처리)
         onFormatSelected(format);
       },
       child: Container(
