@@ -36,6 +36,7 @@ class BibleReaderScreen extends StatefulWidget {
   final String bookEng;        // 예: "Gen"
   final int initialChapter;    // 시작 장
   final int? initialVerse;     // 시작 절 (선택사항)
+  final bool autoShowDialog;   // 1초 후 자동으로 성경 선택 다이얼로그 표시 여부
 
   const BibleReaderScreen({
     super.key,
@@ -44,6 +45,7 @@ class BibleReaderScreen extends StatefulWidget {
     required this.bookEng,
     required this.initialChapter,
     this.initialVerse,
+    this.autoShowDialog = false,
   });
 
   @override
@@ -73,6 +75,9 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
   final ScrollController _scrollController = ScrollController();
   final Map<int, GlobalKey> _verseKeys = {};
   double _scrollProgress = 0.0; // 스크롤 진행률 (0.0 ~ 1.0);
+
+  // 성경 선택 다이얼로그 표시 가능 여부 (1초 후 true)
+  bool _canShowDialog = false;
 
   @override
   void initState() {
@@ -114,6 +119,21 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
           }
         });
       });
+    }
+
+    // autoShowDialog가 true면 1초 후 자동으로 성경 선택 다이얼로그 표시
+    if (widget.autoShowDialog) {
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        if (mounted) {
+          setState(() {
+            _canShowDialog = true;
+          });
+          _showBibleSelectionDialog();
+        }
+      });
+    } else {
+      // autoShowDialog가 false면 즉시 선택 가능
+      _canShowDialog = true;
     }
   }
 
@@ -225,8 +245,11 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.menu_book, color: Colors.black87),
-            onPressed: _showBibleSelectionDialog,
+            icon: Icon(
+              Icons.menu_book, 
+              color: _canShowDialog ? Colors.black87 : Colors.grey[300],
+            ),
+            onPressed: _canShowDialog ? _showBibleSelectionDialog : null,
           ),
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.black87),

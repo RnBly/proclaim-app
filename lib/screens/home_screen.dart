@@ -1103,7 +1103,7 @@ Widget _buildCopyButtonOnly() {
     if (mode == null || !mounted) return;
 
     if (mode == 'daily') {
-      // 일일 묵상: 바로 창세기 1장으로 이동 (책/장/절은 화면에서 선택)
+      // 일일 묵상: 바로 창세기 1장으로 이동 (1초 후 성경 선택 창 자동 표시)
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -1112,6 +1112,7 @@ Widget _buildCopyButtonOnly() {
             bookName: '창세기',
             bookEng: 'Genesis',
             initialChapter: 1,
+            autoShowDialog: true,
           ),
         ),
       ).then((_) {
