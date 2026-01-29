@@ -1069,26 +1069,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     if (mode == null || !mounted) return;
 
     if (mode == 'daily') {
-      final result = await showDialog<Map<String, dynamic>>(
-        context: context,
-        builder: (context) => const BibleSelectionDialog(),
-      );
-
-      if (result != null && mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BibleReaderScreen(
-              bookShort: result['book'],
-              bookName: result['bookName'],
-              bookEng: result['bookEng'],
-              initialChapter: result['chapter'],
-            ),
+      // 일일 묵상: 바로 창세기 1장으로 이동 (1초 후 성경 선택 창 자동 표시)
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const BibleReaderScreen(
+            bookShort: '창',
+            bookName: '창세기',
+            bookEng: 'Genesis',
+            initialChapter: 1,
+            autoShowDialog: true,
           ),
-        ).then((_) {
-          _loadMeditations();
-        });
-      }
+        ),
+      ).then((_) {
+        _loadMeditations();
+      });
     } else if (mode == 'monthly') {
       Navigator.push(
         context,
