@@ -229,23 +229,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
           },
           children: [
             BiblePage(
-              sheetType: 'old',
-              selectedDate: _selectedDate,
-              translation: _currentTranslation,
-              selectedVerses: _selectedVerses['old']!,
-              highlightedVerses: _highlightedVerses,
-              onVerseToggle: (key) => _toggleVerse('old', key),
-              onMeditationView: _viewMeditation,
-              titleFontSize: _titleFontSize,
-              bodyFontSize: _bodyFontSize,
-            ),
-            BiblePage(
               sheetType: 'psalms',
               selectedDate: _selectedDate,
               translation: _currentTranslation,
               selectedVerses: _selectedVerses['psalms']!,
               highlightedVerses: _highlightedVerses,
               onVerseToggle: (key) => _toggleVerse('psalms', key),
+              onMeditationView: _viewMeditation,
+              titleFontSize: _titleFontSize,
+              bodyFontSize: _bodyFontSize,
+            ),
+            BiblePage(
+              sheetType: 'old',
+              selectedDate: _selectedDate,
+              translation: _currentTranslation,
+              selectedVerses: _selectedVerses['old']!,
+              highlightedVerses: _highlightedVerses,
+              onVerseToggle: (key) => _toggleVerse('old', key),
               onMeditationView: _viewMeditation,
               titleFontSize: _titleFontSize,
               bodyFontSize: _bodyFontSize,
@@ -279,23 +279,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       return 1.0 - (normalizedProgress * 0.5);
     }
   }
-  /*/ 복사 버튼만 표시 (묵상 기능 제거)
-Widget _buildCopyButtonOnly() {
-  return Opacity(
-    opacity: _getButtonOpacity(),
-    child: FloatingActionButton(
-      heroTag: 'copy',
-      onPressed: _copySelectedVerses,
-      backgroundColor: Colors.blue,
-      child: const Icon(
-        Icons.content_copy,
-        color: Colors.white,
-        size: 24,
-      ),
-    ),
-  );
-}
-*/
+
   _buildFloatingActionButtons() {
     final authService = AuthService();
     final isLoggedIn = authService.isLoggedIn;
@@ -629,7 +613,7 @@ Widget _buildCopyButtonOnly() {
   Future<List<VerseReference>> _getSelectedVerseReferences() async {
     final List<VerseReference> verses = [];
 
-    for (var sheetType in ['old', 'psalms', 'new']) {
+    for (var sheetType in ['psalms', 'old', 'new']) {
       final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
       for (var reading in readings) {
@@ -709,7 +693,6 @@ Widget _buildCopyButtonOnly() {
   }
 
   // 묵상 조회
-  // 묵상 조회 - BuildContext 문제 완전 해결 버전
   Future<void> _viewMeditation(String book, int chapter, int verse) async {
     final authService = AuthService();
     final userId = authService.getUserId();
@@ -739,7 +722,7 @@ Widget _buildCopyButtonOnly() {
           if (!mounted) return;
 
           final confirm = await showDialog<bool>(
-            context: dialogContext, // ⭐ dialogContext 사용
+            context: dialogContext,
             builder: (deleteContext) => AlertDialog(
               title: const Text('묵상 삭제'),
               content: const Text('이 묵상을 삭제하시겠습니까?'),
@@ -764,7 +747,7 @@ Widget _buildCopyButtonOnly() {
             await _loadMeditations();
 
             if (mounted) {
-              Navigator.pop(dialogContext); // 묵상 조회 다이얼로그 닫기
+              Navigator.pop(dialogContext);
 
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -779,7 +762,6 @@ Widget _buildCopyButtonOnly() {
           print('🔧 수정 시작: ${meditation.id}');
 
           try {
-            // 1단계: 먼저 수정 확인 다이얼로그
             final confirm = await showDialog<bool>(
               context: dialogContext,
               builder: (confirmContext) => AlertDialog(
@@ -806,26 +788,21 @@ Widget _buildCopyButtonOnly() {
               return;
             }
 
-            // 2단계: 기존 묵상 데이터 복사
             final oldVerses = meditation.verses;
             final oldContent = meditation.content;
             final oldColor = meditation.highlightColor;
             print('📋 기존 데이터 복사 완료');
 
-            // 3단계: 기존 묵상 삭제
             await meditationService.deleteMeditation(userId, meditation.id);
             await _loadMeditations();
             print('🗑️ 기존 묵상 삭제 완료');
 
-            // 4단계: 묵상 조회 다이얼로그 닫기
             Navigator.pop(dialogContext);
 
-            // 잠시 대기 (UI 업데이트 시간 확보)
             await Future.delayed(const Duration(milliseconds: 100));
 
             if (!mounted) return;
 
-            // 5단계: 새 묵상 작성 다이얼로그 (기존 내용으로 미리 채움)
             final content = await showDialog<String>(
               context: context,
               builder: (newContext) => MeditationWritingDialog(
@@ -836,7 +813,7 @@ Widget _buildCopyButtonOnly() {
             );
 
             if (content == null || content.isEmpty) {
-              print('❌ 새 묵상 작성 취소됨 - 원본 묵상은 이미 삭제됨');
+              print('❌ 새 묵상 작성 취소됨');
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -847,16 +824,15 @@ Widget _buildCopyButtonOnly() {
               }
               return;
             }
-            print('📝 새 내용 작성 완료: $content');
+            print('📝 새 내용 작성 완료');
 
-            // 6단계: 색상 선택
             final color = await showDialog<String>(
               context: context,
               builder: (colorContext) => const ColorSelectionDialog(),
             );
 
             if (color == null) {
-              print('❌ 색상 선택 취소됨 - 묵상 저장하지 않음');
+              print('❌ 색상 선택 취소됨');
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -869,7 +845,6 @@ Widget _buildCopyButtonOnly() {
             }
             print('🎨 선택된 색상: $color');
 
-            // 7단계: 새 묵상으로 저장
             final newMeditation = Meditation(
               id: meditationService.generateId(),
               userId: userId,
@@ -881,14 +856,12 @@ Widget _buildCopyButtonOnly() {
             );
 
             await meditationService.saveMeditation(newMeditation);
-            print('✅ 새 묵상 저장 완료: ${newMeditation.id}');
+            print('✅ 새 묵상 저장 완료');
 
-            // 8단계: 하이라이트 새로고침
             await _loadMeditations();
             print('✅ 하이라이트 업데이트 완료');
 
             if (mounted) {
-              // 성공 메시지
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('묵상이 수정되었습니다'),
@@ -896,7 +869,6 @@ Widget _buildCopyButtonOnly() {
                 ),
               );
 
-              // 잠시 대기 후 수정된 묵상 다시 열기
               await Future.delayed(const Duration(milliseconds: 300));
 
               if (mounted) {
@@ -926,7 +898,6 @@ Widget _buildCopyButtonOnly() {
       context: context,
       builder: (dialogContext) => CopyDialog(
         onFormatSelected: (format) async {
-          // 다이얼로그 먼저 닫기
           Navigator.pop(dialogContext);
 
           String formatted = '';
@@ -963,7 +934,7 @@ Widget _buildCopyButtonOnly() {
   Future<String> _getKoreanFormat() async {
     final List<SelectedVerse> allSelected = [];
 
-    for (var sheetType in ['old', 'psalms', 'new']) {
+    for (var sheetType in ['psalms', 'old', 'new']) {
       final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
       for (var reading in readings) {
@@ -991,14 +962,13 @@ Widget _buildCopyButtonOnly() {
 
     final formattedText = BibleService().formatSelectedVerses(allSelected);
     
-    // 앱 링크 추가
     return '$formattedText\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
   Future<String> _getEsvFormat() async {
     final List<SelectedVerseEsv> allSelected = [];
 
-    for (var sheetType in ['old', 'psalms', 'new']) {
+    for (var sheetType in ['psalms', 'old', 'new']) {
       final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
       for (var reading in readings) {
@@ -1040,14 +1010,13 @@ Widget _buildCopyButtonOnly() {
 
     final formattedText = BibleService().formatSelectedVersesEsv(allSelected);
     
-    // 앱 링크 추가
     return '$formattedText\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
   Future<String> _getCompareFormat() async {
     final List<SelectedVerseCompare> allSelected = [];
 
-    for (var sheetType in ['old', 'psalms', 'new']) {
+    for (var sheetType in ['psalms', 'old', 'new']) {
       final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
       for (var reading in readings) {
@@ -1088,13 +1057,10 @@ Widget _buildCopyButtonOnly() {
 
     final formattedText = BibleService().formatSelectedVersesCompare(allSelected);
     
-    // 앱 링크 추가
     return '$formattedText\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
-  // 읽기 모드 선택 다이얼로그 표시
   Future<void> _showBibleSelectionDialog() async {
-    // 먼저 읽기 모드 선택
     final mode = await showDialog<String>(
       context: context,
       builder: (context) => const ReadingModeDialog(),
@@ -1103,14 +1069,12 @@ Widget _buildCopyButtonOnly() {
     if (mode == null || !mounted) return;
 
     if (mode == 'daily') {
-      // 일일 묵상: 기존 성경 선택 다이얼로그
       final result = await showDialog<Map<String, dynamic>>(
         context: context,
         builder: (context) => const BibleSelectionDialog(),
       );
 
       if (result != null && mounted) {
-        // 선택된 책/장/절로 성경 읽기 화면 이동
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -1122,19 +1086,16 @@ Widget _buildCopyButtonOnly() {
             ),
           ),
         ).then((_) {
-          // 성경 읽기 화면에서 돌아왔을 때 묵상 다시 로드
           _loadMeditations();
         });
       }
     } else if (mode == 'monthly') {
-      // 한 달 통독: 한 달 통독 화면으로 이동
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => const MonthlyReadingScreen(),
         ),
       ).then((_) {
-        // 화면에서 돌아왔을 때 묵상 다시 로드
         _loadMeditations();
       });
     }

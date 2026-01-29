@@ -4,7 +4,7 @@
 /// 
 /// 주요 기능:
 /// - 매달 1일부터 30일까지의 통독 계획 표시
-/// - 2페이지 구조: 1) 구약+신약, 2) 시편
+/// - 2페이지 구조: 1) 시편, 2) 구약+신약
 /// - 날짜 선택 가능
 /// - 역본 전환 (한글/ESV)
 
@@ -201,7 +201,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
   void _toggleVerse(String key) {
     setState(() {
-      final sheetType = _currentPage == 0 ? 'monthly' : 'monthly_psalms';
+      final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
       if (_selectedVerses[sheetType]!.contains(key)) {
         _selectedVerses[sheetType]!.remove(key);
       } else {
@@ -254,9 +254,9 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildPageIndicator(0, '구·신약'),
+                _buildPageIndicator(0, '시편'),
                 const SizedBox(width: 8),
-                _buildPageIndicator(1, '시편'),
+                _buildPageIndicator(1, '구·신약'),
               ],
             ),
           ),
@@ -271,8 +271,8 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
                 });
               },
               children: [
-                _buildMonthlyReadingPage(),
                 _buildMonthlyPsalmsPage(),
+                _buildMonthlyReadingPage(),
               ],
             ),
           ),
@@ -392,7 +392,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
       context: context,
       builder: (dialogContext) => CopyDialog(
         onFormatSelected: (format) async {
-          // 다이얼로그 먼저 닫기
           Navigator.pop(dialogContext);
 
           String formatted = '';
@@ -428,7 +427,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
   Future<String> _getKoreanFormat() async {
     final List<SelectedVerse> allSelected = [];
 
-    final sheetType = _currentPage == 0 ? 'monthly' : 'monthly_psalms';
+    final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
     final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
     for (var reading in readings) {
@@ -454,14 +453,13 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
     final formattedText = BibleService().formatSelectedVerses(allSelected);
     
-    // 앱 링크 추가
     return '$formattedText\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
   Future<String> _getEsvFormat() async {
     final List<SelectedVerseEsv> allSelected = [];
 
-    final sheetType = _currentPage == 0 ? 'monthly' : 'monthly_psalms';
+    final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
     final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
     for (var reading in readings) {
@@ -504,14 +502,13 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
     final formattedText = BibleService().formatSelectedVersesEsv(allSelected);
     
-    // 앱 링크 추가
     return '$formattedText\n\n👇Today\'s Scripture Reading👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
   Future<String> _getCompareFormat() async {
     final List<SelectedVerseCompare> allSelected = [];
 
-    final sheetType = _currentPage == 0 ? 'monthly' : 'monthly_psalms';
+    final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
     final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
     for (var reading in readings) {
@@ -555,7 +552,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
     final formattedText = BibleService().formatSelectedVersesCompare(allSelected);
     
-    // 앱 링크 추가
     return '$formattedText\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
@@ -564,7 +560,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
   }
 
   Future<void> _showMeditationWritingDialog() async {
-    final sheetType = _currentPage == 0 ? 'monthly' : 'monthly_psalms';
+    final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
     
     // 선택된 구절들을 VerseReference로 변환
     final verses = await _getSelectedVerseReferences(sheetType);
@@ -691,7 +687,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
       
       // 선택 초기화
       setState(() {
-        _selectedVerses[_currentPage == 0 ? 'monthly' : 'monthly_psalms']!.clear();
+        _selectedVerses[_currentPage == 0 ? 'monthly_psalms' : 'monthly']!.clear();
       });
     }
   }
@@ -946,9 +942,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context); // 다이얼로그 닫기
-
-                    // 로그인 화면으로 이동
+                    Navigator.pop(context);
                     Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (context) => const LoginScreen()),
                       (route) => false,
