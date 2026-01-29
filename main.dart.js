@@ -92727,19 +92727,19 @@ o=A.aGu(g,B.k,0,g,A.dH(A.b([s,A.dH(A.b([r,q,n,A.e7(g,g,g,o,g,p?new A.awA(h):g,g,
 n=h.f
 q=h.r
 r=h.w
-s=r.h(0,"old")
+s=r.h(0,"psalms")
 s.toString
 l=h.ax
 k=h.galN()
 j=h.x
-q=A.M3(h.y,l,g,k,new A.awB(h),n,s,"old",j,q)
+q=A.M3(h.y,l,g,k,new A.awB(h),n,s,"psalms",j,q)
 j=h.f
 s=h.r
-n=r.h(0,"psalms")
+n=r.h(0,"old")
 n.toString
 l=h.ax
 i=h.x
-s=A.M3(h.y,l,g,k,new A.awC(h),j,n,"psalms",i,s)
+s=A.M3(h.y,l,g,k,new A.awC(h),j,n,"old",i,s)
 i=h.f
 n=h.r
 r=r.h(0,"new")
@@ -92809,7 +92809,7 @@ return A.z($async$mA,r)},
 Ge(){var s=0,r=A.A(t.Bp),q,p=this,o,n,m,l,k,j,i,h,g,f,e,d,c,b,a,a0
 var $async$Ge=A.v(function(a1,a2){if(a1===1)return A.x(a2,r)
 while(true)switch(s){case 0:a0=A.b([],t.jE)
-for(o=["old","psalms","new"],n=p.w,m=0;m<3;++m){l=o[m]
+for(o=["psalms","old","new"],n=p.w,m=0;m<3;++m){l=o[m]
 k=$.bU().kX(p.f,l)
 for(j=k.length,i=0;i<k.length;k.length===j||(0,A.L)(k),++i){h=k[i]
 g=$.bU().iu(h.b,h.d,h.e,h.w)
@@ -92866,7 +92866,7 @@ return A.z($async$Ga,r)},
 Gd(){var s=0,r=A.A(t.N),q,p=this,o,n,m,l,k,j,i,h,g,f,e,d,c,b,a,a0
 var $async$Gd=A.v(function(a1,a2){if(a1===1)return A.x(a2,r)
 while(true)switch(s){case 0:a0=A.b([],t.oi)
-for(o=["old","psalms","new"],n=p.w,m=0;m<3;++m){l=o[m]
+for(o=["psalms","old","new"],n=p.w,m=0;m<3;++m){l=o[m]
 k=$.bU().kX(p.f,l)
 for(j=k.length,i=0;i<k.length;k.length===j||(0,A.L)(k),++i){h=k[i]
 g=$.bU().iu(h.b,h.d,h.e,h.w)
@@ -92882,7 +92882,7 @@ return A.z($async$Gd,r)},
 Gc(){var s=0,r=A.A(t.N),q,p=this,o,n,m,l,k,j,i,h,g,f,e,d,c,b,a,a0,a1,a2,a3
 var $async$Gc=A.v(function(a4,a5){if(a4===1)return A.x(a5,r)
 while(true)switch(s){case 0:a3=A.b([],t.B2)
-for(o=["old","psalms","new"],n=p.w,m=0;m<3;++m){l=o[m]
+for(o=["psalms","old","new"],n=p.w,m=0;m<3;++m){l=o[m]
 k=$.bU().kX(p.f,l)
 for(j=k.length,i=0;i<k.length;k.length===j||(0,A.L)(k),++i){h=k[i]
 g=$.bU()
@@ -92903,7 +92903,7 @@ return A.z($async$Gc,r)},
 Gb(){var s=0,r=A.A(t.N),q,p=this,o,n,m,l,k,j,i,h,g,f,e,d,c,b,a,a0,a1
 var $async$Gb=A.v(function(a2,a3){if(a2===1)return A.x(a3,r)
 while(true)switch(s){case 0:a1=A.b([],t.ar)
-for(o=["old","psalms","new"],n=p.w,m=0;m<3;++m){l=o[m]
+for(o=["psalms","old","new"],n=p.w,m=0;m<3;++m){l=o[m]
 k=$.bU().kX(p.f,l)
 for(j=k.length,i=0;i<k.length;k.length===j||(0,A.L)(k),++i){h=k[i]
 g=$.bU()
@@ -92998,10 +92998,10 @@ s.e=this.b
 s.z=0},
 $S:0}
 A.awB.prototype={
-$1(a){return this.a.Gf("old",a)},
+$1(a){return this.a.Gf("psalms",a)},
 $S:42}
 A.awC.prototype={
-$1(a){return this.a.Gf("psalms",a)},
+$1(a){return this.a.Gf("old",a)},
 $S:42}
 A.awD.prototype={
 $1(a){return this.a.Gf("new",a)},
@@ -93212,18 +93212,18 @@ break}a=t.N
 s=11
 return A.o(A.c5(new A.aws(l,k,j),b,a),$async$$1)
 case 11:i=a5
-if(i==null||J.aX(i)===0){A.ab("\u274c \uc0c8 \ubb35\uc0c1 \uc791\uc131 \ucde8\uc18c\ub428 - \uc6d0\ubcf8 \ubb35\uc0c1\uc740 \uc774\ubbf8 \uc0ad\uc81c\ub428")
+if(i==null||J.aX(i)===0){A.ab("\u274c \uc0c8 \ubb35\uc0c1 \uc791\uc131 \ucde8\uc18c\ub428")
 a1=a1.c
 if(a1!=null){a1=a1.a2(t.q)
 a1.toString
 a1.f.cA(B.lk)}s=1
-break}A.ab("\ud83d\udcdd \uc0c8 \ub0b4\uc6a9 \uc791\uc131 \uc644\ub8cc: "+A.k(i))
+break}A.ab("\ud83d\udcdd \uc0c8 \ub0b4\uc6a9 \uc791\uc131 \uc644\ub8cc")
 b=a1.c
 b.toString
 s=12
 return A.o(A.c5(new A.awt(),b,a),$async$$1)
 case 12:h=a5
-if(h==null){A.ab("\u274c \uc0c9\uc0c1 \uc120\ud0dd \ucde8\uc18c\ub428 - \ubb35\uc0c1 \uc800\uc7a5\ud558\uc9c0 \uc54a\uc74c")
+if(h==null){A.ab("\u274c \uc0c9\uc0c1 \uc120\ud0dd \ucde8\uc18c\ub428")
 a1=a1.c
 if(a1!=null){a1=a1.a2(t.q)
 a1.toString
@@ -93232,7 +93232,7 @@ break}A.ab("\ud83c\udfa8 \uc120\ud0dd\ub41c \uc0c9\uc0c1: "+A.k(h))
 g=new A.df("meditation_"+Date.now(),c,l,i,h,new A.bE(Date.now(),0,!1),new A.bE(Date.now(),0,!1))
 s=13
 return A.o(d.l1(g),$async$$1)
-case 13:A.ab("\u2705 \uc0c8 \ubb35\uc0c1 \uc800\uc7a5 \uc644\ub8cc: "+g.a)
+case 13:A.ab("\u2705 \uc0c8 \ubb35\uc0c1 \uc800\uc7a5 \uc644\ub8cc")
 s=14
 return A.o(a1.ko(),$async$$1)
 case 14:A.ab("\u2705 \ud558\uc774\ub77c\uc774\ud2b8 \uc5c5\ub370\uc774\ud2b8 \uc644\ub8cc")
@@ -93458,24 +93458,24 @@ A.c5(new A.ayU(this),s,t.z)},
 akL(a){this.S(new A.ayV(this,a))},
 I(a){var s,r,q,p,o,n,m,l,k,j,i=this,h=null,g="monthly_psalms",f=i.f,e=A.dM(f)>30?30:A.dM(f),d=t.p
 f=A.aGu(h,B.k,0,A.e7(h,h,h,B.oi,h,new A.az7(a),h,h,h,h),A.dH(A.b([A.dp(h,A.bO("\ud55c \ub2ec \ud1b5\ub3c5 ("+(""+A.d8(f)+"\uc6d4 "+e+"\uc77c")+")",h,h,h,B.lx,h,h),B.O,!1,h,h,h,h,h,h,h,h,h,h,h,h,h,i.gafu(),h,h,h,h,h,h),A.e7(h,h,h,B.k1,h,i.gafw(),h,h,h,h)],d),B.J,B.bL,B.L))
-s=A.b7(h,A.dH(A.b([i.NS(0,"\uad6c\xb7\uc2e0\uc57d"),B.eb,i.NS(1,"\uc2dc\ud3b8")],d),B.J,B.hN,B.L),B.l,h,h,h,h,h,B.nF,h)
+s=A.b7(h,A.dH(A.b([i.NS(0,"\uc2dc\ud3b8"),B.eb,i.NS(1,"\uad6c\xb7\uc2e0\uc57d")],d),B.J,B.hN,B.L),B.l,h,h,h,h,h,B.nF,h)
 r=i.f
 q=t.kK
 p=i.r
 o=i.y
-n=o.h(0,"monthly")
+n=o.h(0,g)
 n.toString
 m=i.z
 l=i.gakK()
 k=i.gafy()
 j=i.w
-p=A.M3(i.x,m,new A.eQ("monthly_"+A.d8(r)+"_"+A.dM(r),q),k,l,r,n,"monthly",j,p)
+p=A.M3(i.x,m,new A.eQ("monthly_psalms_"+A.d8(r)+"_"+A.dM(r),q),k,l,r,n,g,j,p)
 j=i.f
 n=i.r
-o=o.h(0,g)
+o=o.h(0,"monthly")
 o.toString
 r=i.w
-d=A.cz(A.b([s,A.ff(A.aNV(A.b([p,A.M3(i.x,m,new A.eQ("monthly_psalms_"+A.d8(j)+"_"+A.dM(j),q),k,l,j,o,g,r,n)],d),i.d,new A.az8(i)),1)],d),B.J,B.B,B.L)
+d=A.cz(A.b([s,A.ff(A.aNV(A.b([p,A.M3(i.x,m,new A.eQ("monthly_"+A.d8(j)+"_"+A.dM(j),q),k,l,j,o,"monthly",r,n)],d),i.d,new A.az8(i)),1)],d),B.J,B.B,B.L)
 return A.alz(f,B.k,d,i.aft()?i.afs():h)},
 afs(){var s,r,q=this,p=null,o=$.h9().c!=null,n=A.b([],t.p)
 if(q.Q){s=q.at
@@ -93498,7 +93498,7 @@ return A.z($async$F1,r)},
 FE(){var s=0,r=A.A(t.N),q,p=this,o,n,m,l,k,j,i,h,g,f,e,d,c,b
 var $async$FE=A.v(function(a,a0){if(a===1)return A.x(a0,r)
 while(true)switch(s){case 0:d=A.b([],t.oi)
-c=p.e===0?"monthly":"monthly_psalms"
+c=p.e===0?"monthly_psalms":"monthly"
 b=$.bU().kX(p.f,c)
 for(o=b.length,n=p.y,m=0;m<b.length;b.length===o||(0,A.L)(b),++m){l=b[m]
 k=$.bU().iu(l.b,l.d,l.e,l.w)
@@ -93514,7 +93514,7 @@ return A.z($async$FE,r)},
 FD(){var s=0,r=A.A(t.N),q,p=this,o,n,m,l,k,j,i,h,g,f,e,d,c,b,a,a0
 var $async$FD=A.v(function(a1,a2){if(a1===1)return A.x(a2,r)
 while(true)switch(s){case 0:b=A.b([],t.B2)
-a=p.e===0?"monthly":"monthly_psalms"
+a=p.e===0?"monthly_psalms":"monthly"
 a0=$.bU().kX(p.f,a)
 for(o=a0.length,n=p.y,m=0;m<a0.length;a0.length===o||(0,A.L)(a0),++m){l=a0[m]
 k=$.bU()
@@ -93535,7 +93535,7 @@ return A.z($async$FD,r)},
 FB(){var s=0,r=A.A(t.N),q,p=this,o,n,m,l,k,j,i,h,g,f,e,d,c,b,a
 var $async$FB=A.v(function(a0,a1){if(a0===1)return A.x(a1,r)
 while(true)switch(s){case 0:c=A.b([],t.ar)
-b=p.e===0?"monthly":"monthly_psalms"
+b=p.e===0?"monthly_psalms":"monthly"
 a=$.bU().kX(p.f,b)
 for(o=a.length,n=p.y,m=0;m<a.length;a.length===o||(0,A.L)(a),++m){l=a[m]
 k=$.bU()
@@ -93557,7 +93557,7 @@ aft(){return this.y.gaT(0).ft(0,new A.ayz())},
 mz(){var s=0,r=A.A(t.H),q,p=this,o,n,m,l,k,j
 var $async$mz=A.v(function(a,b){if(a===1)return A.x(b,r)
 while(true)switch(s){case 0:s=3
-return A.o(p.FH(p.e===0?"monthly":"monthly_psalms"),$async$mz)
+return A.o(p.FH(p.e===0?"monthly_psalms":"monthly"),$async$mz)
 case 3:j=b
 if(J.dS(j)){o=p.c
 if(o!=null){o=o.a2(t.q)
@@ -93704,7 +93704,7 @@ s.w=this.b
 s.x=this.c},
 $S:0}
 A.ayV.prototype={
-$0(){var s,r=this.a,q=r.e===0?"monthly":"monthly_psalms"
+$0(){var s,r=this.a,q=r.e===0?"monthly_psalms":"monthly"
 r=r.y
 s=this.b
 if(r.h(0,q).p(0,s))r.h(0,q).E(0,s)
@@ -93834,7 +93834,7 @@ A.ayP.prototype={
 $1(a){return B.dB},
 $S:61}
 A.ayD.prototype={
-$0(){var s=this.a,r=s.e===0?"monthly":"monthly_psalms"
+$0(){var s=this.a,r=s.e===0?"monthly_psalms":"monthly"
 s.y.h(0,r).N(0)},
 $S:0}
 A.az5.prototype={
