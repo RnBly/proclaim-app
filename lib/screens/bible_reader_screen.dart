@@ -109,20 +109,9 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
     // 스크롤 리스너 추가
     _scrollController.addListener(_updateScrollProgress);
 
-    // 초기 절로 스크롤 (build 후)
-    if (widget.initialVerse != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        // 충분한 지연을 두고 스크롤 (키가 완전히 생성될 시간 확보)
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            _scrollToVerse(widget.initialVerse!);
-          }
-        });
-      });
-    }
-
     // autoShowDialog가 true면 1초 후 자동으로 성경 선택 다이얼로그 표시
     if (widget.autoShowDialog) {
+      // autoShowDialog일 때는 initialVerse 스크롤 건너뛰기 (다이얼로그에서 선택 후 스크롤)
       Future.delayed(const Duration(milliseconds: 1000), () {
         if (mounted) {
           setState(() {
@@ -134,6 +123,18 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
     } else {
       // autoShowDialog가 false면 즉시 선택 가능
       _canShowDialog = true;
+      
+      // 초기 절로 스크롤 (build 후)
+      if (widget.initialVerse != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          // 충분한 지연을 두고 스크롤 (키가 완전히 생성될 시간 확보)
+          Future.delayed(const Duration(milliseconds: 800), () {
+            if (mounted) {
+              _scrollToVerse(widget.initialVerse!);
+            }
+          });
+        });
+      }
     }
   }
 
@@ -1102,6 +1103,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
               bookEng: result['bookEng'],
               initialChapter: result['chapter'],
               initialVerse: targetVerse,
+              autoShowDialog: false,  // 다시 진입할 때는 자동 다이얼로그 표시 안 함
             ),
           ),
         );
