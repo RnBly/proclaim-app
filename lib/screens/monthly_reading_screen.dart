@@ -27,6 +27,7 @@ import '../widgets/verse_selection_dialog.dart';
 import '../widgets/copy_dialog.dart';
 import '../widgets/settings_dialog.dart';
 import '../widgets/date_picker_dialog.dart' as custom;
+import '../widgets/meditation_action_buttons.dart';
 import 'login_screen.dart';
 
 class MonthlyReadingScreen extends StatefulWidget {
@@ -36,7 +37,7 @@ class MonthlyReadingScreen extends StatefulWidget {
   State<MonthlyReadingScreen> createState() => _MonthlyReadingScreenState();
 }
 
-class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with TickerProviderStateMixin {
+class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   DateTime _selectedDate = DateTime.now();
@@ -54,27 +55,12 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
   // 하이라이트된 구절 정보
   final Map<String, String> _highlightedVerses = {};
 
-  // 묵상 버튼 애니메이션
-  bool _isExpanded = false;
-  late AnimationController _expandController;
-  late Animation<double> _expandAnimation;
-
   @override
   void initState() {
     super.initState();
     _loadSavedPreferences();
     _loadMonthlyReadingPlan();
     _loadMeditations();
-
-    // 버튼 확장 애니메이션 설정
-    _expandController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-    _expandAnimation = CurvedAnimation(
-      parent: _expandController,
-      curve: Curves.easeInOut,
-    );
   }
 
   Future<void> _loadSavedPreferences() async {
@@ -279,111 +265,13 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
         ],
       ),
       floatingActionButton: _hasSelectedVerses()
-          ? _buildFloatingActionButtons()
+          ? MeditationActionButtons(
+              heroTagPrefix: 'monthly',
+              onCopyPressed: _copySelectedVerses,
+              onMeditationPressed: _showMeditationWritingDialog,
+              onLoginPrompt: _showLoginPrompt,
+            )
           : null,
-    );
-  }
-
-  Widget _buildFloatingActionButtons() {
-    final authService = AuthService();
-    final isLoggedIn = authService.isLoggedIn;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        // 복사 버튼 (확장 시)
-        if (_isExpanded)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: ScaleTransition(
-              scale: _expandAnimation,
-              child: FloatingActionButton(
-                heroTag: 'copy',
-                onPressed: () {
-                  setState(() {
-                    _isExpanded = false;
-                    _expandController.reverse();
-                  });
-                  _copySelectedVerses();
-                },
-                backgroundColor: Colors.blue,
-                child: const Icon(
-                  Icons.content_copy,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-            ),
-          ),
-
-        // 묵상 버튼 (확장 시, 비로그인 시 반투명)
-        if (_isExpanded)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: ScaleTransition(
-              scale: _expandAnimation,
-              child: Opacity(
-                opacity: isLoggedIn ? 1.0 : 0.4,
-                child: FloatingActionButton(
-                  heroTag: 'meditation',
-                  onPressed: () {
-                    if (isLoggedIn) {
-                      setState(() {
-                        _isExpanded = false;
-                        _expandController.reverse();
-                      });
-                      _showMeditationWritingDialog();
-                    } else {
-                      setState(() {
-                        _isExpanded = false;
-                        _expandController.reverse();
-                      });
-                      _showLoginPrompt();
-                    }
-                  },
-                  backgroundColor: const Color(0xFFCE6E26),
-                  child: const Icon(
-                    Icons.edit,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-        // 메인 버튼 (+ 또는 X)
-        FloatingActionButton(
-          heroTag: 'main',
-          onPressed: () {
-            setState(() {
-              _isExpanded = !_isExpanded;
-              if (_isExpanded) {
-                _expandController.forward();
-              } else {
-                _expandController.reverse();
-              }
-            });
-          },
-          backgroundColor: _isExpanded ? Colors.grey : Colors.blue[700],
-          elevation: 6.0,
-          child: _isExpanded
-              ? const Icon(Icons.close, color: Colors.white, size: 32)
-              : Container(
-                  alignment: Alignment.center,
-                  child: const Text(
-                    '+',
-                    style: TextStyle(
-                      fontSize: 40,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w300,
-                      height: 1.0,
-                    ),
-                  ),
-                ),
-        ),
-      ],
     );
   }
 
@@ -1046,7 +934,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
   @override
   void dispose() {
-    _expandController.dispose();
     _pageController.dispose();
     super.dispose();
   }

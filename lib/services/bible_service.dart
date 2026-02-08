@@ -752,15 +752,8 @@ class BibleService {
   String formatSelectedVerses(List<SelectedVerse> verses) {
     if (verses.isEmpty) return '';
 
-    verses.sort((a, b) {
-      final bookOrder = ['창', '출', '레', '민', '신', '시', '마', '막', '눅', '요'];
-      final aIndex = bookOrder.indexOf(a.book);
-      final bIndex = bookOrder.indexOf(b.book);
-
-      if (aIndex != bIndex) return aIndex.compareTo(bIndex);
-      if (a.chapter != b.chapter) return a.chapter.compareTo(b.chapter);
-      return a.verseNumber.compareTo(b.verseNumber);
-    });
+    // 정렬 제거 - 사용자가 선택한 순서 그대로 유지
+    // verses.sort(...); ← 이 부분 삭제!
 
     final StringBuffer buffer = StringBuffer();
     String? lastBook;
@@ -812,15 +805,8 @@ class BibleService {
   String formatSelectedVersesEsv(List<SelectedVerseEsv> verses) {
     if (verses.isEmpty) return '';
 
-    verses.sort((a, b) {
-      final bookOrder = ['Gen', 'Exo', 'Lev', 'Num', 'Deu', 'Psa', 'Mat', 'Mar', 'Luk', 'Joh'];
-      final aIndex = bookOrder.indexOf(a.bookEng);
-      final bIndex = bookOrder.indexOf(b.bookEng);
-
-      if (aIndex != bIndex) return aIndex.compareTo(bIndex);
-      if (a.chapter != b.chapter) return a.chapter.compareTo(b.chapter);
-      return a.verseNumber.compareTo(b.verseNumber);
-    });
+    // 정렬 제거 - 사용자가 선택한 순서 그대로 유지
+    // verses.sort(...); ← 이 부분 삭제!
 
     final StringBuffer buffer = StringBuffer();
     String? lastBook;
@@ -872,15 +858,8 @@ class BibleService {
   String formatSelectedVersesCompare(List<SelectedVerseCompare> verses) {
     if (verses.isEmpty) return '';
 
-    verses.sort((a, b) {
-      final bookOrder = ['창', '출', '레', '민', '신', '시', '마', '막', '눅', '요'];
-      final aIndex = bookOrder.indexOf(a.book);
-      final bIndex = bookOrder.indexOf(b.book);
-
-      if (aIndex != bIndex) return aIndex.compareTo(bIndex);
-      if (a.chapter != b.chapter) return a.chapter.compareTo(b.chapter);
-      return a.verseNumber.compareTo(b.verseNumber);
-    });
+    // 정렬 제거 - 사용자가 선택한 순서 그대로 유지
+    // verses.sort(...); ← 이 부분 삭제!
 
     final StringBuffer buffer = StringBuffer();
     String? lastBook;
