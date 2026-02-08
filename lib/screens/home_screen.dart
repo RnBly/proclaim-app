@@ -10,6 +10,7 @@
  * - 역본 선택 버튼 (TranslationDialog)
  * - 설정 버튼 (SettingsDialog)
  * - 묵상 작성 버튼 (MeditationWritingDialog)
+ * - 하이라이트 기능 (색상만 표시)
  * - 로그아웃 버튼
  * 
  * 데이터 흐름:
@@ -40,6 +41,8 @@ import '../widgets/reading_mode_dialog.dart';
 import 'bible_reader_screen.dart';
 import 'monthly_reading_screen.dart';
 import 'login_screen.dart';
+import '../widgets/meditation_action_buttons.dart';
+import '../widgets/highlight_options_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -48,7 +51,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
   final PageController _pageController = PageController();
@@ -67,11 +70,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
   double _scrollProgress = 0.0;
 
-  // 묵상 기능 관련 상태
-  bool _isExpanded = false; // 버튼 확장 상태
-  late AnimationController _expandController;
-  late Animation<double> _expandAnimation;
-
   // 하이라이트된 구절 정보 (book-chapter-verse -> color)
   Map<String, String> _highlightedVerses = {};
 
@@ -79,16 +77,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   void initState() {
     super.initState();
     _loadSavedPreferences();
-
-    // 버튼 확장 애니메이션 설정
-    _expandController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-    _expandAnimation = CurvedAnimation(
-      parent: _expandController,
-      curve: Curves.easeInOut,
-    );
   }
 
   @override
@@ -264,12 +252,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
           ],
         ),
       ),
-      floatingActionButton: _hasSelectedVerses()
-           ? _buildFloatingActionButtons()  // 복사 버튼만 표시
+      floatingActionButton: _selectedVerses['old']!.isNotEmpty ||
+              _selectedVerses['psalms']!.isNotEmpty ||
+              _selectedVerses['new']!.isNotEmpty
+          ? MeditationActionButtons(
+              heroTagPrefix: 'home',
+              opacity: _getButtonOpacity(),
+              onCopyPressed: _copySelectedVerses,
+              onHighlightPressed: _startHighlight,
+              onMeditationPressed: _startMeditation,
+              onLoginPrompt: _showLoginPrompt,
+            )
           : null,
     );
   }
-
+  
   // 복사 버튼 투명도 계산
   double _getButtonOpacity() {
     if (_scrollProgress < 0.9) {
@@ -280,114 +277,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     }
   }
 
-  _buildFloatingActionButtons() {
-    final authService = AuthService();
-    final isLoggedIn = authService.isLoggedIn;
-
-    return Opacity(
-      opacity: _getButtonOpacity(),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          // 복사 버튼 (확장 시)
-          if (_isExpanded)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: ScaleTransition(
-                scale: _expandAnimation,
-                child: FloatingActionButton(
-                  heroTag: 'copy',
-                  onPressed: () {
-                    setState(() {
-                      _isExpanded = false;
-                      _expandController.reverse();
-                    });
-                    _copySelectedVerses();
-                  },
-                  backgroundColor: Colors.blue,
-                  child: const Icon(
-                    Icons.content_copy,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-              ),
-            ),
-
-          // 묵상 버튼 (항상 표시, 비로그인 시 반투명)
-          if (_isExpanded)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: ScaleTransition(
-                scale: _expandAnimation,
-                child: Opacity(
-                  opacity: isLoggedIn ? 1.0 : 0.4,  // 비로그인 시 투명
-                  child: FloatingActionButton(
-                    heroTag: 'meditation',
-                    onPressed: () {
-                      if (isLoggedIn) {
-                        // 로그인됨 → 버튼 닫고 묵상 작성
-                        setState(() {
-                          _isExpanded = false;
-                          _expandController.reverse();
-                        });
-                        _startMeditation();
-                      } else {
-                        // 비로그인 → 버튼 닫고 로그인 유도
-                        setState(() {
-                          _isExpanded = false;
-                          _expandController.reverse();
-                        });
-                        _showLoginPrompt();
-                      }
-                    },
-                    backgroundColor: const Color(0xFFCE6E26),
-                    child: const Icon(
-                      Icons.edit,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-          // 메인 버튼 (+ 또는 X)
-          FloatingActionButton(
-            heroTag: 'main',
-            onPressed: () {
-              setState(() {
-                _isExpanded = !_isExpanded;
-                if (_isExpanded) {
-                  _expandController.forward();
-                } else {
-                  _expandController.reverse();
-                }
-              });
-            },
-            backgroundColor: _isExpanded ? Colors.grey : Colors.blue[700],
-            elevation: 6.0,
-            child: _isExpanded
-                ? const Icon(Icons.close, color: Colors.white, size: 32)
-                : Container(
-              alignment: Alignment.center,
-              child: const Text(
-                '+',
-                style: TextStyle(
-                  fontSize: 40,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w300,
-                  height: 1.0,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
- 
   void _showDatePicker() {
     showDialog(
       context: context,
@@ -562,6 +451,80 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     );
   }
 
+  // 하이라이트 시작
+  Future<void> _startHighlight() async {
+    final verses = await _getSelectedVerseReferences();
+
+    if (verses.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('선택된 구절이 없습니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // 색상 선택만
+    final color = await showDialog<String>(
+      context: context,
+      builder: (context) => const ColorSelectionDialog(),
+    );
+
+    if (color == null) return;
+
+    // 하이라이트 저장
+    await _saveHighlight(verses, color);
+  }
+
+  // 하이라이트 저장
+  Future<void> _saveHighlight(
+    List<VerseReference> verses,
+    String color,
+  ) async {
+    final authService = AuthService();
+    final userId = authService.getUserId();
+
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('로그인이 필요합니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    final meditationService = MeditationService();
+    final highlight = Meditation(
+      id: meditationService.generateId(),
+      userId: userId,
+      verses: verses,
+      content: '',  // 빈 문자열 = 하이라이트만
+      highlightColor: color,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+
+    await meditationService.saveMeditation(highlight);
+    await _loadMeditations();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('하이라이트가 저장되었습니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      setState(() {
+        _selectedVerses['old']!.clear();
+        _selectedVerses['psalms']!.clear();
+        _selectedVerses['new']!.clear();
+      });
+    }
+  }
+
   // 묵상 시작
   Future<void> _startMeditation() async {
     // 선택된 구절들을 VerseReference로 변환
@@ -692,7 +655,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     }
   }
 
-  // 묵상 조회
+  // 묵상/하이라이트 조회
   Future<void> _viewMeditation(String book, int chapter, int verse) async {
     final authService = AuthService();
     final userId = authService.getUserId();
@@ -710,6 +673,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     if (meditations.isEmpty) return;
 
     if (!mounted) return;
+
+    // 첫 번째 항목이 하이라이트인지 묵상인지 확인
+    final first = meditations.first;
+    
+    if (first.content.isEmpty) {
+      // 하이라이트 옵션 다이얼로그
+      await showDialog(
+        context: context,
+        builder: (context) => HighlightOptionsDialog(
+          highlight: first,
+          onOptionSelected: (option) async {
+            switch (option) {
+              case HighlightOption.changeColor:
+                await _changeHighlightColor(first);
+                break;
+              case HighlightOption.addMeditation:
+                await _convertToMeditation(first);
+                break;
+              case HighlightOption.delete:
+                await _deleteHighlight(first);
+                break;
+            }
+          },
+        ),
+      );
+      return;
+    }
 
     // 묵상 조회 다이얼로그 표시
     await showDialog(
@@ -759,8 +749,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
           }
         },
         onEdit: (meditation) async {
-          print('🔧 수정 시작: ${meditation.id}');
-
           try {
             final confirm = await showDialog<bool>(
               context: dialogContext,
@@ -783,19 +771,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               ),
             );
 
-            if (confirm != true) {
-              print('❌ 수정 취소됨');
-              return;
-            }
+            if (confirm != true) return;
 
             final oldVerses = meditation.verses;
             final oldContent = meditation.content;
             final oldColor = meditation.highlightColor;
-            print('📋 기존 데이터 복사 완료');
 
             await meditationService.deleteMeditation(userId, meditation.id);
             await _loadMeditations();
-            print('🗑️ 기존 묵상 삭제 완료');
 
             Navigator.pop(dialogContext);
 
@@ -813,7 +796,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             );
 
             if (content == null || content.isEmpty) {
-              print('❌ 새 묵상 작성 취소됨');
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -824,7 +806,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               }
               return;
             }
-            print('📝 새 내용 작성 완료');
 
             final color = await showDialog<String>(
               context: context,
@@ -832,7 +813,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             );
 
             if (color == null) {
-              print('❌ 색상 선택 취소됨');
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -843,7 +823,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               }
               return;
             }
-            print('🎨 선택된 색상: $color');
 
             final newMeditation = Meditation(
               id: meditationService.generateId(),
@@ -856,10 +835,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             );
 
             await meditationService.saveMeditation(newMeditation);
-            print('✅ 새 묵상 저장 완료');
-
             await _loadMeditations();
-            print('✅ 하이라이트 업데이트 완료');
 
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -876,8 +852,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               }
             }
           } catch (e) {
-            print('❌ 전체 오류: $e');
-
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -891,6 +865,136 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         },
       ),
     );
+  }
+
+  // 하이라이트 색상 변경
+  Future<void> _changeHighlightColor(Meditation highlight) async {
+    final color = await showDialog<String>(
+      context: context,
+      builder: (context) => const ColorSelectionDialog(),
+    );
+
+    if (color == null) return;
+
+    final authService = AuthService();
+    final userId = authService.getUserId();
+    if (userId == null) return;
+
+    final meditationService = MeditationService();
+    
+    // 기존 삭제
+    await meditationService.deleteMeditation(userId, highlight.id);
+    
+    // 새 색상으로 저장
+    final updated = Meditation(
+      id: meditationService.generateId(),
+      userId: userId,
+      verses: highlight.verses,
+      content: '',
+      highlightColor: color,
+      createdAt: highlight.createdAt,
+      updatedAt: DateTime.now(),
+    );
+    
+    await meditationService.saveMeditation(updated);
+    await _loadMeditations();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('색상이 변경되었습니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  // 하이라이트를 묵상으로 전환
+  Future<void> _convertToMeditation(Meditation highlight) async {
+    // 묵상 작성 다이얼로그
+    final content = await showDialog<String>(
+      context: context,
+      builder: (context) => MeditationWritingDialog(
+        selectedVerses: highlight.verses,
+      ),
+    );
+
+    if (content == null || content.isEmpty) return;
+
+    final authService = AuthService();
+    final userId = authService.getUserId();
+    if (userId == null) return;
+
+    final meditationService = MeditationService();
+    
+    // 기존 하이라이트 삭제
+    await meditationService.deleteMeditation(userId, highlight.id);
+    
+    // 묵상으로 저장
+    final meditation = Meditation(
+      id: meditationService.generateId(),
+      userId: userId,
+      verses: highlight.verses,
+      content: content,
+      highlightColor: highlight.highlightColor,
+      createdAt: highlight.createdAt,
+      updatedAt: DateTime.now(),
+    );
+    
+    await meditationService.saveMeditation(meditation);
+    await _loadMeditations();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('묵상이 저장되었습니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  // 하이라이트 삭제
+  Future<void> _deleteHighlight(Meditation highlight) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('하이라이트 삭제'),
+        content: const Text('이 하이라이트를 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final authService = AuthService();
+    final userId = authService.getUserId();
+    if (userId == null) return;
+
+    final meditationService = MeditationService();
+    await meditationService.deleteMeditation(userId, highlight.id);
+    await _loadMeditations();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('하이라이트가 삭제되었습니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<void> _copySelectedVerses() async {
@@ -1010,7 +1114,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
     final formattedText = BibleService().formatSelectedVersesEsv(allSelected);
     
-    return '$formattedText\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
+    return '$formattedText\n\n👇Today\'s Scripture Reading👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
   Future<String> _getCompareFormat() async {
@@ -1069,7 +1173,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     if (mode == null || !mounted) return;
 
     if (mode == 'daily') {
-      // 일일 묵상: 바로 창세기 1장으로 이동 (1초 후 성경 선택 창 자동 표시)
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -1099,7 +1202,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   @override
   void dispose() {
     _pageController.dispose();
-    _expandController.dispose();
     super.dispose();
   }
 }

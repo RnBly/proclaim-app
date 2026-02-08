@@ -7,6 +7,7 @@
 /// - 2페이지 구조: 1) 시편, 2) 구약+신약
 /// - 날짜 선택 가능
 /// - 역본 전환 (한글/ESV)
+/// - 하이라이트 기능
 
 library;
 
@@ -28,6 +29,7 @@ import '../widgets/copy_dialog.dart';
 import '../widgets/settings_dialog.dart';
 import '../widgets/date_picker_dialog.dart' as custom;
 import '../widgets/meditation_action_buttons.dart';
+import '../widgets/highlight_options_dialog.dart';
 import 'login_screen.dart';
 
 class MonthlyReadingScreen extends StatefulWidget {
@@ -53,7 +55,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
   };
 
   // 하이라이트된 구절 정보
-  final Map<String, String> _highlightedVerses = {};
+  Map<String, String> _highlightedVerses = {};
 
   @override
   void initState() {
@@ -268,11 +270,85 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
           ? MeditationActionButtons(
               heroTagPrefix: 'monthly',
               onCopyPressed: _copySelectedVerses,
+              onHighlightPressed: _startHighlight,
               onMeditationPressed: _showMeditationWritingDialog,
               onLoginPrompt: _showLoginPrompt,
             )
           : null,
     );
+  }
+
+  // 하이라이트 시작
+  Future<void> _startHighlight() async {
+    final verses = await _getSelectedVerseReferences();
+
+    if (verses.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('선택된 구절이 없습니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // 색상 선택만
+    final color = await showDialog<String>(
+      context: context,
+      builder: (context) => const ColorSelectionDialog(),
+    );
+
+    if (color == null) return;
+
+    // 하이라이트 저장
+    await _saveHighlight(verses, color);
+  }
+
+  // 하이라이트 저장
+  Future<void> _saveHighlight(
+    List<VerseReference> verses,
+    String color,
+  ) async {
+    final authService = AuthService();
+    final userId = authService.getUserId();
+
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('로그인이 필요합니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    final meditationService = MeditationService();
+    final highlight = Meditation(
+      id: meditationService.generateId(),
+      userId: userId,
+      verses: verses,
+      content: '',  // 빈 문자열 = 하이라이트만
+      highlightColor: color,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+
+    await meditationService.saveMeditation(highlight);
+    await _loadMeditations();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('하이라이트가 저장되었습니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      setState(() {
+        _selectedVerses['monthly']!.clear();
+        _selectedVerses['monthly_psalms']!.clear();
+      });
+    }
   }
 
   Future<void> _copySelectedVerses() async {
@@ -451,7 +527,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
     final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
     
     // 선택된 구절들을 VerseReference로 변환
-    final verses = await _getSelectedVerseReferences(sheetType);
+    final verses = await _getSelectedVerseReferences();
 
     if (verses.isEmpty) {
       if (mounted) {
@@ -502,8 +578,9 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
   }
 
   // 선택된 구절들을 VerseReference로 변환
-  Future<List<VerseReference>> _getSelectedVerseReferences(String sheetType) async {
+  Future<List<VerseReference>> _getSelectedVerseReferences() async {
     final List<VerseReference> verses = [];
+    final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
     final readings = BibleService().getAllReadingsForDate(_selectedDate, sheetType);
 
     for (var reading in readings) {
@@ -597,6 +674,33 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
     if (meditations.isEmpty) return;
 
     if (!mounted) return;
+
+    // 첫 번째 항목이 하이라이트인지 묵상인지 확인
+    final first = meditations.first;
+    
+    if (first.content.isEmpty) {
+      // 하이라이트 옵션 다이얼로그
+      await showDialog(
+        context: context,
+        builder: (context) => HighlightOptionsDialog(
+          highlight: first,
+          onOptionSelected: (option) async {
+            switch (option) {
+              case HighlightOption.changeColor:
+                await _changeHighlightColor(first);
+                break;
+              case HighlightOption.addMeditation:
+                await _convertToMeditation(first);
+                break;
+              case HighlightOption.delete:
+                await _deleteHighlight(first);
+                break;
+            }
+          },
+        ),
+      );
+      return;
+    }
 
     await showDialog(
       context: context,
@@ -760,6 +864,136 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
         },
       ),
     );
+  }
+
+  // 하이라이트 색상 변경
+  Future<void> _changeHighlightColor(Meditation highlight) async {
+    final color = await showDialog<String>(
+      context: context,
+      builder: (context) => const ColorSelectionDialog(),
+    );
+
+    if (color == null) return;
+
+    final authService = AuthService();
+    final userId = authService.getUserId();
+    if (userId == null) return;
+
+    final meditationService = MeditationService();
+    
+    // 기존 삭제
+    await meditationService.deleteMeditation(userId, highlight.id);
+    
+    // 새 색상으로 저장
+    final updated = Meditation(
+      id: meditationService.generateId(),
+      userId: userId,
+      verses: highlight.verses,
+      content: '',
+      highlightColor: color,
+      createdAt: highlight.createdAt,
+      updatedAt: DateTime.now(),
+    );
+    
+    await meditationService.saveMeditation(updated);
+    await _loadMeditations();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('색상이 변경되었습니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  // 하이라이트를 묵상으로 전환
+  Future<void> _convertToMeditation(Meditation highlight) async {
+    // 묵상 작성 다이얼로그
+    final content = await showDialog<String>(
+      context: context,
+      builder: (context) => MeditationWritingDialog(
+        selectedVerses: highlight.verses,
+      ),
+    );
+
+    if (content == null || content.isEmpty) return;
+
+    final authService = AuthService();
+    final userId = authService.getUserId();
+    if (userId == null) return;
+
+    final meditationService = MeditationService();
+    
+    // 기존 하이라이트 삭제
+    await meditationService.deleteMeditation(userId, highlight.id);
+    
+    // 묵상으로 저장
+    final meditation = Meditation(
+      id: meditationService.generateId(),
+      userId: userId,
+      verses: highlight.verses,
+      content: content,
+      highlightColor: highlight.highlightColor,
+      createdAt: highlight.createdAt,
+      updatedAt: DateTime.now(),
+    );
+    
+    await meditationService.saveMeditation(meditation);
+    await _loadMeditations();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('묵상이 저장되었습니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  // 하이라이트 삭제
+  Future<void> _deleteHighlight(Meditation highlight) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('하이라이트 삭제'),
+        content: const Text('이 하이라이트를 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final authService = AuthService();
+    final userId = authService.getUserId();
+    if (userId == null) return;
+
+    final meditationService = MeditationService();
+    await meditationService.deleteMeditation(userId, highlight.id);
+    await _loadMeditations();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('하이라이트가 삭제되었습니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _showLoginPrompt() {

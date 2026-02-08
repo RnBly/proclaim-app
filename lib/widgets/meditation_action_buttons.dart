@@ -1,20 +1,19 @@
-/**
- * meditation_action_buttons.dart
- * 
- * 묵상 및 복사 기능을 제공하는 재사용 가능한 플로팅 액션 버튼 위젯
- * 
- * 사용되는 곳:
- * - HomeScreen (1일 묵상)
- * - BibleReaderScreen (성경 전체 읽기)
- * - MonthlyReadingScreen (한달 읽기)
- * 
- * 주요 기능:
- * - + 버튼 클릭 시 묵상/복사 버튼 확장
- * - 복사 버튼: 선택된 구절 복사
- * - 묵상 버튼: 로그인 시 묵상 작성, 비로그인 시 로그인 유도
- * - 애니메이션: ScaleTransition을 통한 부드러운 확장/축소
- * - Opacity 조절: 스크롤 위치에 따라 투명도 변경 가능
- */
+/// meditation_action_buttons.dart
+/// 
+/// 묵상, 하이라이트, 복사 기능을 제공하는 재사용 가능한 플로팅 액션 버튼 위젯
+/// 
+/// 사용되는 곳:
+/// - HomeScreen (1일 묵상)
+/// - BibleReaderScreen (성경 전체 읽기)
+/// - MonthlyReadingScreen (한달 읽기)
+/// 
+/// 주요 기능:
+/// - + 버튼 클릭 시 묵상/하이라이트/복사 버튼 확장
+/// - 복사 버튼: 선택된 구절 복사
+/// - 하이라이트 버튼: 색상만 표시 (묵상 없이)
+/// - 묵상 버튼: 로그인 시 묵상 작성, 비로그인 시 로그인 유도
+/// - 애니메이션: ScaleTransition을 통한 부드러운 확장/축소
+/// - Opacity 조절: 스크롤 위치에 따라 투명도 변경 가능
 
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
@@ -23,10 +22,13 @@ class MeditationActionButtons extends StatefulWidget {
   /// 복사 버튼 클릭 시 실행될 콜백
   final VoidCallback onCopyPressed;
   
+  /// 하이라이트 버튼 클릭 시 실행될 콜백
+  final VoidCallback onHighlightPressed;
+  
   /// 묵상 버튼 클릭 시 실행될 콜백 (로그인 상태)
   final VoidCallback onMeditationPressed;
   
-  /// 묵상 버튼 클릭 시 실행될 콜백 (비로그인 상태)
+  /// 묵상/하이라이트 버튼 클릭 시 실행될 콜백 (비로그인 상태)
   final VoidCallback onLoginPrompt;
   
   /// 버튼의 투명도 (0.0 ~ 1.0)
@@ -40,6 +42,7 @@ class MeditationActionButtons extends StatefulWidget {
   const MeditationActionButtons({
     super.key,
     required this.onCopyPressed,
+    required this.onHighlightPressed,
     required this.onMeditationPressed,
     required this.onLoginPrompt,
     this.opacity = 1.0,
@@ -121,6 +124,34 @@ class _MeditationActionButtonsState extends State<MeditationActionButtons>
                     Icons.content_copy,
                     color: Colors.white,
                     size: 24,
+                  ),
+                ),
+              ),
+            ),
+
+          // 하이라이트 버튼 (확장 시, 비로그인 시 반투명)
+          if (_isExpanded)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: ScaleTransition(
+                scale: _expandAnimation,
+                child: Opacity(
+                  opacity: isLoggedIn ? 1.0 : 0.4,
+                  child: FloatingActionButton(
+                    heroTag: '${widget.heroTagPrefix}_highlight',
+                    onPressed: () {
+                      if (isLoggedIn) {
+                        _closeAndExecute(widget.onHighlightPressed);
+                      } else {
+                        _closeAndExecute(widget.onLoginPrompt);
+                      }
+                    },
+                    backgroundColor: Colors.green,
+                    child: const Icon(
+                      Icons.highlight,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
                 ),
               ),
