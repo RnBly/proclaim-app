@@ -1,23 +1,21 @@
-/**
- * home_screen.dart
- * 
- * 앱의 메인 화면
- * 
- * 주요 기능:
- * - 오늘 날짜의 성경 읽기 계획 표시 (구약, 시편, 신약)
- * - 각 읽기 계획 클릭 시 BiblePage로 이동
- * - 날짜 선택 버튼 (DatePickerDialog)
- * - 역본 선택 버튼 (TranslationDialog)
- * - 설정 버튼 (SettingsDialog)
- * - 묵상 작성 버튼 (MeditationWritingDialog)
- * - 하이라이트 기능 (색상만 표시)
- * - 로그아웃 버튼
- * 
- * 데이터 흐름:
- * - BibleService에서 오늘 날짜의 읽기 계획 조회
- * - PreferencesService에서 폰트 크기 및 역본 설정 조회
- * - 설정 변경 시 화면 새로고침
- */
+/// home_screen.dart
+/// 
+/// 앱의 메인 화면
+/// 
+/// 주요 기능:
+/// - 오늘 날짜의 성경 읽기 계획 표시 (구약, 시편, 신약)
+/// - 각 읽기 계획 클릭 시 BiblePage로 이동
+/// - 날짜 선택 버튼 (DatePickerDialog)
+/// - 역본 선택 버튼 (TranslationDialog)
+/// - 설정 버튼 (SettingsDialog)
+/// - 묵상 작성 버튼 (MeditationWritingDialog)
+/// - 하이라이트 기능
+/// - 로그아웃 버튼
+/// 
+/// 데이터 흐름:
+/// - BibleService에서 오늘 날짜의 읽기 계획 조회
+/// - PreferencesService에서 폰트 크기 및 역본 설정 조회
+/// - 설정 변경 시 화면 새로고침
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -68,7 +66,12 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
   double _titleFontSize = 24.0;
   double _bodyFontSize = 18.0;
 
-  double _scrollProgress = 0.0;
+  // 페이지별 스크롤 진행도 (각 페이지 독립적으로 관리)
+  final Map<int, double> _scrollProgressByPage = {
+    0: 0.0,  // 시편
+    1: 0.0,  // 구약
+    2: 0.0,  // 신약
+  };
 
   // 하이라이트된 구절 정보 (book-chapter-verse -> color)
   Map<String, String> _highlightedVerses = {};
@@ -202,7 +205,9 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
             final maxScroll = notification.metrics.maxScrollExtent;
             final currentScroll = notification.metrics.pixels;
             setState(() {
-              _scrollProgress = maxScroll > 0 ? currentScroll / maxScroll : 0.0;
+              // 현재 페이지의 스크롤 진행도만 업데이트
+              _scrollProgressByPage[_currentPage] = 
+                  maxScroll > 0 ? currentScroll / maxScroll : 0.0;
             });
           }
           return false;
@@ -212,7 +217,8 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
           onPageChanged: (index) {
             setState(() {
               _currentPage = index;
-              _scrollProgress = 0.0;
+              // 페이지 전환 시 해당 페이지의 스크롤 진행도를 0으로 초기화
+              _scrollProgressByPage[index] = 0.0;
             });
           },
           children: [
@@ -267,16 +273,20 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     );
   }
   
-  // 복사 버튼 투명도 계산
+  // 복사 버튼 투명도 계산 (현재 페이지의 스크롤 진행도 기준)
   double _getButtonOpacity() {
-    if (_scrollProgress < 0.9) {
+    final progress = _scrollProgressByPage[_currentPage] ?? 0.0;
+    
+    if (progress < 0.9) {
       return 1.0;
     } else {
-      final normalizedProgress = (_scrollProgress - 0.9) / 0.1;
+      final normalizedProgress = (progress - 0.9) / 0.1;
       return 1.0 - (normalizedProgress * 0.5);
     }
   }
 
+  
+ 
   void _showDatePicker() {
     showDialog(
       context: context,
@@ -338,10 +348,6 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
         _selectedVerses[sheetType]!.add(key);
       }
     });
-  }
-
-  bool _hasSelectedVerses() {
-    return _selectedVerses.values.any((set) => set.isNotEmpty);
   }
 
   // 로그인 유도 다이얼로그

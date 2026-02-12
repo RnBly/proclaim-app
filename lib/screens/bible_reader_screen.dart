@@ -1,49 +1,52 @@
 /**
  * bible_reader_screen.dart
  * 
- * 성경 전체 읽기 화면
+ * 사용자가 선택한 성경 구절을 읽는 화면
  * 
  * 주요 기능:
- * - 성경 66권 전체를 장 단위로 읽기
- * - 책/장 선택 다이얼로그
- * - 역본 전환 (한글/ESV/대조)
- * - 구절 선택 및 복사
- * - 묵상 작성
- * - 하이라이트 기능
+ * - 한 페이지에 한 장 전체 표시
+ * - 좌우 화살표로 장 이동
+ * - 구절 선택 및 하이라이트
+ * - 묵상 작성/보기
+ * - 하이라이트 기능 (색상만 표시)
+ * - 구절 복사
  */
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../models/bible_book.dart';
+import '../models/bible_reading.dart';
+import '../models/meditation.dart';
 import '../services/bible_service.dart';
 import '../services/auth_service.dart';
 import '../services/meditation_service.dart';
 import '../services/preferences_service.dart';
-import '../models/bible_reading.dart';
-import '../models/meditation.dart';
-import '../widgets/translation_dialog.dart';
 import '../widgets/meditation_writing_dialog.dart';
 import '../widgets/meditation_view_dialog.dart';
 import '../widgets/color_selection_dialog.dart';
 import '../widgets/verse_selection_dialog.dart';
 import '../widgets/copy_dialog.dart';
 import '../widgets/settings_dialog.dart';
-import '../widgets/meditation_action_buttons.dart';
+import '../widgets/translation_dialog.dart';
+import '../widgets/bible_selection_dialog.dart';
 import '../widgets/highlight_options_dialog.dart';
-import 'login_screen.dart';
+import '../config/meditation_colors.dart';
 
 class BibleReaderScreen extends StatefulWidget {
-  final String bookShort;
-  final String bookName;
-  final String bookEng;
-  final int initialChapter;
-  final bool autoShowDialog;
+  final String bookShort;      // 예: "창"
+  final String bookName;       // 예: "창세기"
+  final String bookEng;        // 예: "Gen"
+  final int initialChapter;    // 시작 장
+  final int? initialVerse;     // 시작 절 (선택사항)
+  final bool autoShowDialog;   // 1초 후 자동으로 성경 선택 다이얼로그 표시 여부
 
   const BibleReaderScreen({
     super.key,
     required this.bookShort,
     required this.bookName,
     required this.bookEng,
-    this.initialChapter = 1,
+    required this.initialChapter,
+    this.initialVerse,
     this.autoShowDialog = false,
   });
 
@@ -51,47 +54,93 @@ class BibleReaderScreen extends StatefulWidget {
   State<BibleReaderScreen> createState() => _BibleReaderScreenState();
 }
 
-class _BibleReaderScreenState extends State<BibleReaderScreen> {
-  late String _currentBookShort;
-  late String _currentBookName;
-  late String _currentBookEng;
+class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProviderStateMixin {
   late int _currentChapter;
-  
+  late BibleBook _currentBook;
   Translation _currentTranslation = Translation.korean;
-  
-  double _titleFontSize = 24.0;
-  double _bodyFontSize = 18.0;
-
   final Set<String> _selectedVerses = {};
   Map<String, String> _highlightedVerses = {};
 
-  List<Verse> _verses = [];
-  List<Verse> _esvVerses = [];
+  // 글씨 크기
+  double _titleFontSize = 24.0;
+  double _bodyFontSize = 18.0;
+
+  // 묵상 버튼 애니메이션
+  bool _isExpanded = false;
+  late AnimationController _expandController;
+  late Animation<double> _expandAnimation;
+
+  // 페이지 컨트롤러 (좌우 스와이프용)
+  late PageController _pageController;
+
+  // 스크롤 컨트롤러
+  final ScrollController _scrollController = ScrollController();
+  final Map<int, GlobalKey> _verseKeys = {};
+  double _scrollProgress = 0.0; // 스크롤 진행률 (0.0 ~ 1.0);
+
+  // 성경 선택 다이얼로그 표시 가능 여부 (1초 후 true)
+  bool _canShowDialog = false;
 
   @override
   void initState() {
     super.initState();
-    _currentBookShort = widget.bookShort;
-    _currentBookName = widget.bookName;
-    _currentBookEng = widget.bookEng;
     _currentChapter = widget.initialChapter;
     
+    // 현재 책 정보 찾기
+    _currentBook = BibleBook.getAllBooks().firstWhere(
+      (book) => book.koreanShort == widget.bookShort,
+      orElse: () => BibleBook.getAllBooks().first,
+    );
+
+    // PageController 초기화 (현재 장 -1 = 인덱스)
+    _pageController = PageController(initialPage: _currentChapter - 1);
+
     _loadSavedPreferences();
-    _loadVerses();
     _loadMeditations();
 
+    // 버튼 확장 애니메이션 설정
+    _expandController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _expandAnimation = CurvedAnimation(
+      parent: _expandController,
+      curve: Curves.easeInOut,
+    );
+
+    // 스크롤 리스너 추가
+    _scrollController.addListener(_updateScrollProgress);
+
+    // autoShowDialog가 true면 1초 후 자동으로 성경 선택 다이얼로그 표시
     if (widget.autoShowDialog) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) {
-            _showBibleSelectionDialog();
-          }
-        });
+      // autoShowDialog일 때는 initialVerse 스크롤 건너뛰기 (다이얼로그에서 선택 후 스크롤)
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        if (mounted) {
+          setState(() {
+            _canShowDialog = true;
+          });
+          _showBibleSelectionDialog();
+        }
       });
+    } else {
+      // autoShowDialog가 false면 즉시 선택 가능
+      _canShowDialog = true;
+      
+      // 초기 절로 스크롤 (build 후)
+      if (widget.initialVerse != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          // 충분한 지연을 두고 스크롤 (키가 완전히 생성될 시간 확보)
+          Future.delayed(const Duration(milliseconds: 800), () {
+            if (mounted) {
+              _scrollToVerse(widget.initialVerse!);
+            }
+          });
+        });
+      }
     }
   }
 
-  Future<void> _loadSavedPreferences() async {
+  void _loadSavedPreferences() {
     final prefs = PreferencesService();
     setState(() {
       _titleFontSize = prefs.getTitleFontSize();
@@ -108,6 +157,16 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
     });
   }
 
+  void _updateScrollProgress() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+      setState(() {
+        _scrollProgress = maxScroll > 0 ? currentScroll / maxScroll : 0.0;
+      });
+    }
+  }
+
   Future<void> _loadMeditations() async {
     final authService = AuthService();
     final userId = authService.getUserId();
@@ -117,6 +176,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
     final meditationService = MeditationService();
     final meditations = await meditationService.getMeditations(userId);
 
+    // 하이라이트 정보 추출
     final highlights = <String, String>{};
     for (var meditation in meditations) {
       for (var verse in meditation.verses) {
@@ -125,118 +185,28 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
       }
     }
 
-    if (mounted) {
-      setState(() {
-        _highlightedVerses = highlights;
-      });
+    setState(() {
+      _highlightedVerses = highlights;
+    });
+  }
+
+  void _scrollToVerse(int verseNumber) {
+    final key = _verseKeys[verseNumber];
+    if (key != null && key.currentContext != null) {
+      Scrollable.ensureVisible(
+        key.currentContext!,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+        alignment: 0.2, // 화면 상단 20% 위치에 표시
+      );
     }
-  }
-
-  void _loadVerses() {
-    final koreanVerses = BibleService().getVerses(
-      _currentBookShort,
-      _currentChapter,
-      _currentChapter,
-    );
-
-    final esvVerses = BibleService().getEsvVerses(
-      _currentBookEng,
-      _currentChapter,
-      _currentChapter,
-    );
-
-    setState(() {
-      _verses = koreanVerses;
-      _esvVerses = esvVerses;
-      _selectedVerses.clear();
-    });
-  }
-
-  void _toggleVerse(String key) {
-    setState(() {
-      if (_selectedVerses.contains(key)) {
-        _selectedVerses.remove(key);
-      } else {
-        _selectedVerses.add(key);
-      }
-    });
-  }
-
-  bool _hasSelectedVerses() {
-    return _selectedVerses.isNotEmpty;
-  }
-
-  void _showBibleSelectionDialog() {
-    // 성경 책/장 선택 다이얼로그
-    // 실제 구현은 별도의 위젯으로 분리 가능
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('성경 선택'),
-        content: const Text('성경 선택 기능은 별도 구현이 필요합니다.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSettingsDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => SettingsDialog(
-        currentTranslation: _currentTranslation,
-        currentTitleFontSize: _titleFontSize,
-        currentBodyFontSize: _bodyFontSize,
-        onTranslationChanged: (translation) {
-          setState(() {
-            _currentTranslation = translation;
-            _selectedVerses.clear();
-          });
-          final prefs = PreferencesService();
-          if (translation == Translation.korean) {
-            prefs.saveTranslation('korean');
-          } else if (translation == Translation.esv) {
-            prefs.saveTranslation('esv');
-          } else if (translation == Translation.compare) {
-            prefs.saveTranslation('compare');
-          }
-          _loadVerses();
-        },
-        onFontSizeChanged: (titleSize, bodySize) {
-          setState(() {
-            _titleFontSize = titleSize;
-            _bodyFontSize = bodySize;
-          });
-          final prefs = PreferencesService();
-          prefs.saveTitleFontSize(titleSize);
-          prefs.saveBodyFontSize(bodySize);
-        },
-      ),
-    );
-  }
-
-  void _previousChapter() {
-    if (_currentChapter > 1) {
-      setState(() {
-        _currentChapter--;
-      });
-      _loadVerses();
-    }
-  }
-
-  void _nextChapter() {
-    setState(() {
-      _currentChapter++;
-    });
-    _loadVerses();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isPsalms = _currentBook.koreanShort == '시';
+    final unit = isPsalms ? '편' : '장';
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -246,254 +216,460 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-        title: GestureDetector(
-          onTap: _showBibleSelectionDialog,
-          child: Text(
-            '$_currentBookName $_currentChapter장',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
+        title: Text(
+          '${_currentBook.koreanName} $_currentChapter$unit',
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
           ),
         ),
         actions: [
+          IconButton(
+            icon: Icon(
+              Icons.menu_book, 
+              color: _canShowDialog ? Colors.black87 : Colors.grey[300],
+            ),
+            onPressed: _canShowDialog ? _showBibleSelectionDialog : null,
+          ),
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.black87),
             onPressed: _showSettingsDialog,
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // 장 네비게이션
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              border: Border(
-                bottom: BorderSide(color: Colors.grey[300]!),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: Icon(
-                    Icons.chevron_left,
-                    color: _currentChapter > 1 ? Colors.black87 : Colors.grey[400],
-                  ),
-                  onPressed: _currentChapter > 1 ? _previousChapter : null,
-                ),
-                Text(
-                  '$_currentChapter장',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right, color: Colors.black87),
-                  onPressed: _nextChapter,
-                ),
-              ],
-            ),
-          ),
-
-          // 본문
-          Expanded(
-            child: _buildVerseList(),
-          ),
-        ],
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: _currentBook.totalChapters,
+        onPageChanged: (pageIndex) {
+          setState(() {
+            _currentChapter = pageIndex + 1;
+            _selectedVerses.clear();
+            _scrollProgress = 0.0;
+          });
+          _loadMeditations();
+        },
+        itemBuilder: (context, pageIndex) {
+          final chapter = pageIndex + 1;
+          return _buildChapterPage(chapter);
+        },
       ),
       floatingActionButton: _hasSelectedVerses()
-          ? MeditationActionButtons(
-              heroTagPrefix: 'reader',
-              onCopyPressed: _copySelectedVerses,
-              onHighlightPressed: _startHighlight,
-              onMeditationPressed: _startMeditation,
-              onLoginPrompt: _showLoginPrompt,
-            )
+          ? _buildFloatingActionButtons()
           : null,
     );
   }
 
-  Widget _buildVerseList() {
-    if (_verses.isEmpty) {
+  Widget _buildChapterPage(int chapter) {
+    final verses = BibleService().getVerses(
+      _currentBook.koreanShort,
+      chapter,
+      chapter,
+    );
+
+    if (verses.isEmpty) {
       return const Center(
-        child: Text('본문을 불러올 수 없습니다'),
+        child: Text('구절을 불러올 수 없습니다'),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _verses.length,
-      itemBuilder: (context, index) {
-        final verse = _verses[index];
-        final isSelected = _selectedVerses.contains(verse.key);
-        final highlightKey = '${verse.book}-${verse.chapter}-${verse.verseNumber}';
-        final highlightColor = _highlightedVerses[highlightKey];
-
-        return _buildVerseItem(verse, isSelected, highlightColor);
-      },
+    // ESV 구절 가져오기
+    final esvVerses = BibleService().getEsvVerses(
+      _currentBook.englishShort,
+      chapter,
+      chapter,
     );
-  }
 
-  Widget _buildVerseItem(Verse verse, bool isSelected, String? highlightColor) {
-    Color? backgroundColor;
-    if (highlightColor != null) {
-      backgroundColor = _getHighlightColor(highlightColor);
-    } else if (isSelected) {
-      backgroundColor = Colors.blue[50];
-    }
-
-    return GestureDetector(
-      onTap: () {
-        if (highlightColor != null) {
-          _viewMeditation(verse.book, verse.chapter, verse.verseNumber);
-        } else {
-          _toggleVerse(verse.key);
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollUpdateNotification) {
+          _updateScrollProgress();
         }
+        return false;
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(8),
-          border: isSelected
-              ? Border.all(color: Colors.blue, width: 2)
-              : null,
-        ),
-        child: _buildVerseContent(verse),
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.all(16),
+        itemCount: verses.length,
+        itemBuilder: (context, index) {
+          final verse = verses[index];
+          final verseKey = '${verse.book}-${verse.chapter}-${verse.verseNumber}';
+          
+          // 해당 절에 대한 GlobalKey 생성
+          _verseKeys[verse.verseNumber] = GlobalKey();
+
+          final isSelected = _selectedVerses.contains(verseKey);
+          final isHighlighted = _highlightedVerses.containsKey(verseKey);
+          final highlightColor = isHighlighted 
+              ? MeditationColors.getColor(_highlightedVerses[verseKey]!)
+              : null;
+
+          // ESV 번역 찾기
+          final esvVerse = esvVerses.firstWhere(
+            (v) => v.verseNumber == verse.verseNumber,
+            orElse: () => Verse(
+              book: '',
+              chapter: 0,
+              verseNumber: 0,
+              text: '',
+            ),
+          );
+
+          return GestureDetector(
+            key: _verseKeys[verse.verseNumber],
+            onTap: () {
+              setState(() {
+                if (isSelected) {
+                  _selectedVerses.remove(verseKey);
+                } else {
+                  _selectedVerses.add(verseKey);
+                }
+              });
+            },
+            onLongPress: isHighlighted
+                ? () => _viewMeditation(verse.book, verse.chapter, verse.verseNumber)
+                : null,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Colors.blue.withOpacity(0.1)
+                    : (highlightColor?.withOpacity(0.2) ?? Colors.transparent),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isSelected
+                      ? Colors.blue
+                      : (highlightColor ?? Colors.transparent),
+                  width: isSelected ? 2 : 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 한글 구절
+                  if (_currentTranslation == Translation.korean ||
+                      _currentTranslation == Translation.compare)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${verse.verseNumber}',
+                          style: TextStyle(
+                            fontSize: _bodyFontSize - 2,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            verse.text,
+                            style: TextStyle(
+                              fontSize: _bodyFontSize,
+                              height: 1.6,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                  // ESV 구절
+                  if (_currentTranslation == Translation.esv ||
+                      _currentTranslation == Translation.compare)
+                    Padding(
+                      padding: _currentTranslation == Translation.compare
+                          ? const EdgeInsets.only(top: 8)
+                          : EdgeInsets.zero,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_currentTranslation == Translation.esv)
+                            Text(
+                              '${verse.verseNumber}',
+                              style: TextStyle(
+                                fontSize: _bodyFontSize - 2,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          if (_currentTranslation == Translation.esv)
+                            const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              esvVerse.text.isNotEmpty
+                                  ? esvVerse.text
+                                  : '(ESV translation not available)',
+                              style: TextStyle(
+                                fontSize: _bodyFontSize - 1,
+                                height: 1.6,
+                                color: _currentTranslation == Translation.compare
+                                    ? Colors.grey[700]
+                                    : Colors.black87,
+                                fontStyle: _currentTranslation == Translation.compare
+                                    ? FontStyle.italic
+                                    : FontStyle.normal,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildVerseContent(Verse verse) {
-    if (_currentTranslation == Translation.korean) {
-      return _buildKoreanVerse(verse);
-    } else if (_currentTranslation == Translation.esv) {
-      return _buildEsvVerse(verse);
+  bool _hasSelectedVerses() {
+    return _selectedVerses.isNotEmpty;
+  }
+
+  double _getButtonOpacity() {
+    if (_scrollProgress < 0.9) {
+      return 1.0;
     } else {
-      return _buildCompareVerse(verse);
+      final normalizedProgress = (_scrollProgress - 0.9) / 0.1;
+      return 1.0 - (normalizedProgress * 0.5);
     }
   }
 
-  Widget _buildKoreanVerse(Verse verse) {
-    return RichText(
-      text: TextSpan(
+  Widget _buildFloatingActionButtons() {
+    final authService = AuthService();
+    final isLoggedIn = authService.isLoggedIn;
+
+    return Opacity(
+      opacity: _getButtonOpacity(),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          TextSpan(
-            text: '${verse.verseNumber}. ',
-            style: TextStyle(
-              fontSize: _bodyFontSize,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue[700],
+          // 복사 버튼 (확장 시)
+          if (_isExpanded)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: ScaleTransition(
+                scale: _expandAnimation,
+                child: FloatingActionButton(
+                  heroTag: 'copy_bible',
+                  onPressed: () {
+                    setState(() {
+                      _isExpanded = false;
+                      _expandController.reverse();
+                    });
+                    _copySelectedVerses();
+                  },
+                  backgroundColor: Colors.blue,
+                  child: const Icon(
+                    Icons.content_copy,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
             ),
-          ),
-          TextSpan(
-            text: verse.text,
-            style: TextStyle(
-              fontSize: _bodyFontSize,
-              color: Colors.black87,
-              height: 1.6,
+
+          // 하이라이트 버튼 (확장 시, 비로그인 시 반투명)
+          if (_isExpanded)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: ScaleTransition(
+                scale: _expandAnimation,
+                child: Opacity(
+                  opacity: isLoggedIn ? 1.0 : 0.4,
+                  child: FloatingActionButton(
+                    heroTag: 'highlight_bible',
+                    onPressed: () {
+                      if (isLoggedIn) {
+                        setState(() {
+                          _isExpanded = false;
+                          _expandController.reverse();
+                        });
+                        _startHighlight();
+                      } else {
+                        setState(() {
+                          _isExpanded = false;
+                          _expandController.reverse();
+                        });
+                        _showLoginPrompt();
+                      }
+                    },
+                    backgroundColor: Colors.green,
+                    child: const Icon(
+                      Icons.highlight,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
             ),
+
+          // 묵상 버튼 (확장 시, 비로그인 시 반투명)
+          if (_isExpanded)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: ScaleTransition(
+                scale: _expandAnimation,
+                child: Opacity(
+                  opacity: isLoggedIn ? 1.0 : 0.4,
+                  child: FloatingActionButton(
+                    heroTag: 'meditation_bible',
+                    onPressed: () {
+                      if (isLoggedIn) {
+                        setState(() {
+                          _isExpanded = false;
+                          _expandController.reverse();
+                        });
+                        _startMeditation();
+                      } else {
+                        setState(() {
+                          _isExpanded = false;
+                          _expandController.reverse();
+                        });
+                        _showLoginPrompt();
+                      }
+                    },
+                    backgroundColor: const Color(0xFFCE6E26),
+                    child: const Icon(
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          // 메인 버튼 (+ 또는 X)
+          FloatingActionButton(
+            heroTag: 'main_bible',
+            onPressed: () {
+              setState(() {
+                _isExpanded = !_isExpanded;
+                if (_isExpanded) {
+                  _expandController.forward();
+                } else {
+                  _expandController.reverse();
+                }
+              });
+            },
+            backgroundColor: _isExpanded ? Colors.grey : Colors.blue[700],
+            elevation: 6.0,
+            child: _isExpanded
+                ? const Icon(Icons.close, color: Colors.white, size: 32)
+                : Container(
+                    alignment: Alignment.center,
+                    child: const Text(
+                      '+',
+                      style: TextStyle(
+                        fontSize: 40,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w300,
+                        height: 1.0,
+                      ),
+                    ),
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEsvVerse(Verse verse) {
-    final esvVerse = _esvVerses.firstWhere(
-      (v) => v.verseNumber == verse.verseNumber,
-      orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
-    );
-
-    return RichText(
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: '${verse.verseNumber}. ',
-            style: TextStyle(
-              fontSize: _bodyFontSize,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue[700],
-            ),
+  void _showLoginPrompt() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.85,
+          constraints: const BoxConstraints(maxWidth: 400),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCE6E26).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.edit_note,
+                  size: 48,
+                  color: Color(0xFFCE6E26),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                '로그인하면\n묵상 기록이 가능합니다',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '지금 로그인하시겠어요?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+                      '/login',
+                      (route) => false,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFCE6E26),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    '로그인',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          TextSpan(
-            text: esvVerse.text,
-            style: TextStyle(
-              fontSize: _bodyFontSize,
-              color: Colors.black87,
-              height: 1.6,
-            ),
-          ),
-        ],
+        ),
       ),
     );
-  }
-
-  Widget _buildCompareVerse(Verse verse) {
-    final esvVerse = _esvVerses.firstWhere(
-      (v) => v.verseNumber == verse.verseNumber,
-      orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 절 번호
-        Text(
-          '${verse.verseNumber}.',
-          style: TextStyle(
-            fontSize: _bodyFontSize,
-            fontWeight: FontWeight.bold,
-            color: Colors.blue[700],
-          ),
-        ),
-        const SizedBox(height: 4),
-        // 한글
-        Text(
-          verse.text,
-          style: TextStyle(
-            fontSize: _bodyFontSize,
-            color: Colors.black87,
-            height: 1.6,
-          ),
-        ),
-        const SizedBox(height: 8),
-        // ESV
-        Text(
-          esvVerse.text,
-          style: TextStyle(
-            fontSize: _bodyFontSize * 0.95,
-            color: Colors.grey[700],
-            height: 1.5,
-            fontStyle: FontStyle.italic,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Color _getHighlightColor(String colorName) {
-    switch (colorName) {
-      case 'yellow':
-        return Colors.yellow[100]!;
-      case 'green':
-        return Colors.green[100]!;
-      case 'blue':
-        return Colors.blue[100]!;
-      case 'purple':
-        return Colors.purple[100]!;
-      case 'pink':
-        return Colors.pink[100]!;
-      default:
-        return Colors.grey[100]!;
-    }
   }
 
   // 하이라이트 시작
@@ -566,7 +742,6 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
     }
   }
 
-  // 묵상 시작
   Future<void> _startMeditation() async {
     final verses = await _getSelectedVerseReferences();
 
@@ -608,17 +783,26 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
     await _saveMeditation(selectedVerses, content, color);
   }
 
-  // 선택된 구절들을 VerseReference로 변환
   Future<List<VerseReference>> _getSelectedVerseReferences() async {
     final List<VerseReference> verses = [];
-
-    for (var verse in _verses) {
-      if (_selectedVerses.contains(verse.key)) {
+    
+    for (var key in _selectedVerses) {
+      final parts = key.split('-');
+      if (parts.length == 3) {
+        final book = parts[0];
+        final chapter = int.parse(parts[1]);
+        final verseNum = int.parse(parts[2]);
+        
+        final verseText = BibleService().getVerses(book, chapter, chapter)
+            .firstWhere((v) => v.verseNumber == verseNum, 
+                orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''))
+            .text;
+        
         verses.add(VerseReference(
-          book: verse.book,
-          chapter: verse.chapter,
-          verse: verse.verseNumber,
-          text: verse.text,
+          book: book,
+          chapter: chapter,
+          verse: verseNum,
+          text: verseText,
         ));
       }
     }
@@ -626,7 +810,6 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
     return verses;
   }
 
-  // 묵상 저장
   Future<void> _saveMeditation(
     List<VerseReference> verses,
     String content,
@@ -673,7 +856,6 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
     }
   }
 
-  // 묵상/하이라이트 조회
   Future<void> _viewMeditation(String book, int chapter, int verse) async {
     final authService = AuthService();
     final userId = authService.getUserId();
@@ -1006,7 +1188,6 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
     }
   }
 
-  // 복사
   Future<void> _copySelectedVerses() async {
     showDialog(
       context: context,
@@ -1046,39 +1227,52 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
   Future<String> _getKoreanFormat() async {
     final List<SelectedVerse> allSelected = [];
 
-    for (var verse in _verses) {
-      if (_selectedVerses.contains(verse.key)) {
-        allSelected.add(SelectedVerse(
-          book: verse.book,
-          fullName: _currentBookName,
-          chapter: verse.chapter,
-          verseNumber: verse.verseNumber,
-          text: verse.text,
-        ));
+    for (var key in _selectedVerses) {
+      final parts = key.split('-');
+      if (parts.length == 3) {
+        final book = parts[0];
+        final chapter = int.parse(parts[1]);
+        final verseNum = int.parse(parts[2]);
+
+        final verse = BibleService().getVerses(book, chapter, chapter)
+            .firstWhere((v) => v.verseNumber == verseNum,
+                orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''));
+
+        if (verse.text.isNotEmpty) {
+          allSelected.add(SelectedVerse(
+            book: book,
+            fullName: _currentBook.koreanName,
+            chapter: chapter,
+            verseNumber: verseNum,
+            text: verse.text,
+          ));
+        }
       }
     }
 
     final formattedText = BibleService().formatSelectedVerses(allSelected);
-    
     return '$formattedText\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
   Future<String> _getEsvFormat() async {
     final List<SelectedVerseEsv> allSelected = [];
 
-    for (var verse in _verses) {
-      if (_selectedVerses.contains(verse.key)) {
-        final esvVerse = _esvVerses.firstWhere(
-          (v) => v.verseNumber == verse.verseNumber,
-          orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
-        );
+    for (var key in _selectedVerses) {
+      final parts = key.split('-');
+      if (parts.length == 3) {
+        final chapter = int.parse(parts[1]);
+        final verseNum = int.parse(parts[2]);
+
+        final esvVerse = BibleService().getEsvVerses(_currentBook.englishShort, chapter, chapter)
+            .firstWhere((v) => v.verseNumber == verseNum,
+                orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''));
 
         if (esvVerse.text.isNotEmpty) {
           allSelected.add(SelectedVerseEsv(
-            bookEng: _currentBookEng,
-            fullNameEng: _currentBookName,
-            chapter: verse.chapter,
-            verseNumber: verse.verseNumber,
+            bookEng: _currentBook.englishShort,
+            fullNameEng: _currentBook.englishName,
+            chapter: chapter,
+            verseNumber: verseNum,
             text: esvVerse.text,
           ));
         }
@@ -1086,125 +1280,133 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
     }
 
     final formattedText = BibleService().formatSelectedVersesEsv(allSelected);
-    
     return '$formattedText\n\n👇Today\'s Scripture Reading👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
   Future<String> _getCompareFormat() async {
     final List<SelectedVerseCompare> allSelected = [];
 
-    for (var verse in _verses) {
-      if (_selectedVerses.contains(verse.key)) {
-        final esvVerse = _esvVerses.firstWhere(
-          (v) => v.verseNumber == verse.verseNumber,
-          orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''),
-        );
+    for (var key in _selectedVerses) {
+      final parts = key.split('-');
+      if (parts.length == 3) {
+        final book = parts[0];
+        final chapter = int.parse(parts[1]);
+        final verseNum = int.parse(parts[2]);
 
-        allSelected.add(SelectedVerseCompare(
-          book: verse.book,
-          fullName: _currentBookName,
-          chapter: verse.chapter,
-          verseNumber: verse.verseNumber,
-          koreanText: verse.text,
-          englishText: esvVerse.text,
-        ));
+        final koreanVerse = BibleService().getVerses(book, chapter, chapter)
+            .firstWhere((v) => v.verseNumber == verseNum,
+                orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''));
+
+        final esvVerse = BibleService().getEsvVerses(_currentBook.englishShort, chapter, chapter)
+            .firstWhere((v) => v.verseNumber == verseNum,
+                orElse: () => Verse(book: '', chapter: 0, verseNumber: 0, text: ''));
+
+        if (koreanVerse.text.isNotEmpty) {
+          allSelected.add(SelectedVerseCompare(
+            book: book,
+            fullName: _currentBook.koreanName,
+            chapter: chapter,
+            verseNumber: verseNum,
+            koreanText: koreanVerse.text,
+            englishText: esvVerse.text,
+          ));
+        }
       }
     }
 
     final formattedText = BibleService().formatSelectedVersesCompare(allSelected);
-    
     return '$formattedText\n\n👇오늘의 말씀읽기👇\nhttps://rnbly.github.io/proclaim-app/';
   }
 
-  void _showLoginPrompt() {
+  Future<void> _showBibleSelectionDialog() async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => const BibleSelectionDialog(),
+    );
+
+    if (result != null && mounted) {
+      final targetVerse = result['verse'] as int?;
+      
+      // 같은 책의 다른 장으로 이동하는 경우
+      if (result['book'] == _currentBook.koreanShort) {
+        final targetChapter = result['chapter'] as int;
+        
+        await _pageController.animateToPage(
+          targetChapter - 1,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+        
+        setState(() {
+          _currentChapter = targetChapter;
+          _selectedVerses.clear();
+        });
+        await _loadMeditations();
+        
+        if (targetVerse != null) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              _scrollToVerse(targetVerse);
+            }
+          });
+        }
+      } else {
+        // 다른 책으로 이동하는 경우
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BibleReaderScreen(
+              bookShort: result['book'],
+              bookName: result['bookName'],
+              bookEng: result['bookEng'],
+              initialChapter: result['chapter'],
+              initialVerse: targetVerse,
+              autoShowDialog: false,  // 다시 진입할 때는 자동 다이얼로그 표시 안 함
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showSettingsDialog() {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.85,
-          constraints: const BoxConstraints(maxWidth: 400),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFCE6E26).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.edit_note,
-                  size: 48,
-                  color: Color(0xFFCE6E26),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                '로그인하면\n묵상 기록이 가능합니다',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                '지금 로그인하시겠어요?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      (route) => false,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFCE6E26),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    '로그인',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+      builder: (context) => SettingsDialog(
+        currentTranslation: _currentTranslation,
+        currentTitleFontSize: _titleFontSize,
+        currentBodyFontSize: _bodyFontSize,
+        onTranslationChanged: (translation) {
+          setState(() {
+            _currentTranslation = translation;
+          });
+          final prefs = PreferencesService();
+          if (translation == Translation.korean) {
+            prefs.saveTranslation('korean');
+          } else if (translation == Translation.esv) {
+            prefs.saveTranslation('esv');
+          } else if (translation == Translation.compare) {
+            prefs.saveTranslation('compare');
+          }
+        },
+        onFontSizeChanged: (titleSize, bodySize) {
+          setState(() {
+            _titleFontSize = titleSize;
+            _bodyFontSize = bodySize;
+          });
+          final prefs = PreferencesService();
+          prefs.saveTitleFontSize(titleSize);
+          prefs.saveBodyFontSize(bodySize);
+        },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _scrollController.dispose();
+    _expandController.dispose();
+    super.dispose();
   }
 }
