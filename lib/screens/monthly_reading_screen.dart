@@ -272,7 +272,8 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
               onCopyPressed: _copySelectedVerses,
               onHighlightPressed: _startHighlight,
               onMeditationPressed: _showMeditationWritingDialog,
-              onLoginPrompt: _showLoginPrompt,
+              onHighlightLoginPrompt: () => _showLoginPrompt(isHighlight: true),
+              onMeditationLoginPrompt: () => _showLoginPrompt(isHighlight: false),
             )
           : null,
     );
@@ -996,7 +997,11 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
     }
   }
 
-  void _showLoginPrompt() {
+  void _showLoginPrompt({required bool isHighlight}) {
+    final featureName = isHighlight ? '하이라이트' : '묵상';
+    final iconColor = isHighlight ? Colors.green : const Color(0xFFCE6E26);
+    final icon = isHighlight ? Icons.highlight : Icons.edit_note;
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -1028,20 +1033,20 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
+                  color: iconColor.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.edit_note,
+                  icon,
                   size: 32,
-                  color: Colors.orange.shade700,
+                  color: iconColor,
                 ),
               ),
               const SizedBox(height: 20),
               // 제목
-              const Text(
-                '묵상 기능',
-                style: TextStyle(
+              Text(
+                '$featureName 기능',
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
@@ -1050,7 +1055,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
               const SizedBox(height: 12),
               // 설명
               Text(
-                '묵상 기능을 사용하려면\n로그인이 필요합니다',
+                '$featureName 기능을 사용하려면\n로그인이 필요합니다',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -1071,7 +1076,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[700],
+                    backgroundColor: iconColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(

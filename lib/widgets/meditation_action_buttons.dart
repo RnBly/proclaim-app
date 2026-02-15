@@ -28,8 +28,11 @@ class MeditationActionButtons extends StatefulWidget {
   /// 묵상 버튼 클릭 시 실행될 콜백 (로그인 상태)
   final VoidCallback onMeditationPressed;
   
-  /// 묵상/하이라이트 버튼 클릭 시 실행될 콜백 (비로그인 상태)
-  final VoidCallback onLoginPrompt;
+  /// 하이라이트 버튼 클릭 시 로그인 유도 콜백 (비로그인 상태)
+  final VoidCallback onHighlightLoginPrompt;
+  
+  /// 묵상 버튼 클릭 시 로그인 유도 콜백 (비로그인 상태)
+  final VoidCallback onMeditationLoginPrompt;
   
   /// 버튼의 투명도 (0.0 ~ 1.0)
   /// 스크롤 위치에 따라 투명도를 조절하고 싶을 때 사용
@@ -44,7 +47,8 @@ class MeditationActionButtons extends StatefulWidget {
     required this.onCopyPressed,
     required this.onHighlightPressed,
     required this.onMeditationPressed,
-    required this.onLoginPrompt,
+    required this.onHighlightLoginPrompt,
+    required this.onMeditationLoginPrompt,
     this.opacity = 1.0,
     this.heroTagPrefix = '',
   });
@@ -143,7 +147,7 @@ class _MeditationActionButtonsState extends State<MeditationActionButtons>
                       if (isLoggedIn) {
                         _closeAndExecute(widget.onHighlightPressed);
                       } else {
-                        _closeAndExecute(widget.onLoginPrompt);
+                        _closeAndExecute(widget.onHighlightLoginPrompt);
                       }
                     },
                     backgroundColor: Colors.green,
@@ -171,7 +175,7 @@ class _MeditationActionButtonsState extends State<MeditationActionButtons>
                       if (isLoggedIn) {
                         _closeAndExecute(widget.onMeditationPressed);
                       } else {
-                        _closeAndExecute(widget.onLoginPrompt);
+                        _closeAndExecute(widget.onMeditationLoginPrompt);
                       }
                     },
                     backgroundColor: const Color(0xFFCE6E26),

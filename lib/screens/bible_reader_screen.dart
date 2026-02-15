@@ -495,7 +495,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
                           _isExpanded = false;
                           _expandController.reverse();
                         });
-                        _showLoginPrompt();
+                        _showLoginPrompt(isHighlight: true);
                       }
                     },
                     backgroundColor: Colors.green,
@@ -531,7 +531,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
                           _isExpanded = false;
                           _expandController.reverse();
                         });
-                        _showLoginPrompt();
+                        _showLoginPrompt(isHighlight: false);
                       }
                     },
                     backgroundColor: const Color(0xFFCE6E26),
@@ -580,7 +580,11 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
     );
   }
 
-  void _showLoginPrompt() {
+  void _showLoginPrompt({required bool isHighlight}) {
+    final featureName = isHighlight ? '하이라이트' : '묵상';
+    final iconColor = isHighlight ? Colors.green : const Color(0xFFCE6E26);
+    final icon = isHighlight ? Icons.highlight : Icons.edit_note;
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -609,20 +613,20 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFCE6E26).withOpacity(0.1),
+                  color: iconColor.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.edit_note,
+                child: Icon(
+                  icon,
                   size: 48,
-                  color: Color(0xFFCE6E26),
+                  color: iconColor,
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                '로그인하면\n묵상 기록이 가능합니다',
+              Text(
+                '로그인하면\n$featureName 기능을 사용할 수 있습니다',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   height: 1.4,
@@ -649,7 +653,7 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> with TickerProvid
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFCE6E26),
+                    backgroundColor: iconColor,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

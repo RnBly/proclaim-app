@@ -34,7 +34,6 @@ import '../widgets/verse_selection_dialog.dart';
 import '../widgets/meditation_writing_dialog.dart';
 import '../widgets/color_selection_dialog.dart';
 import '../widgets/meditation_view_dialog.dart';
-import '../widgets/bible_selection_dialog.dart';
 import '../widgets/reading_mode_dialog.dart';
 import 'bible_reader_screen.dart';
 import 'monthly_reading_screen.dart';
@@ -267,7 +266,8 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
               onCopyPressed: _copySelectedVerses,
               onHighlightPressed: _startHighlight,
               onMeditationPressed: _startMeditation,
-              onLoginPrompt: _showLoginPrompt,
+              onHighlightLoginPrompt: () => _showLoginPrompt(isHighlight: true),
+              onMeditationLoginPrompt: () => _showLoginPrompt(isHighlight: false),
             )
           : null,
     );
@@ -351,7 +351,11 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
   }
 
   // 로그인 유도 다이얼로그
-  void _showLoginPrompt() {
+  void _showLoginPrompt({required bool isHighlight}) {
+    final featureName = isHighlight ? '하이라이트' : '묵상';
+    final iconColor = isHighlight ? Colors.green : const Color(0xFFCE6E26);
+    final icon = isHighlight ? Icons.highlight : Icons.edit_note;
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -384,23 +388,23 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFCE6E26).withOpacity(0.1),
+                  color: iconColor.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.edit_note,
+                child: Icon(
+                  icon,
                   size: 48,
-                  color: Color(0xFFCE6E26),
+                  color: iconColor,
                 ),
               ),
 
               const SizedBox(height: 24),
 
               // 메시지
-              const Text(
-                '로그인하면\n묵상 기록이 가능합니다',
+              Text(
+                '로그인하면\n$featureName 기능을 사용할 수 있습니다',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   height: 1.4,
@@ -434,7 +438,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFCE6E26),
+                    backgroundColor: iconColor,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -462,12 +466,14 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     final verses = await _getSelectedVerseReferences();
 
     if (verses.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('선택된 구절이 없습니다'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('선택된 구절이 없습니다'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
       return;
     }
 
@@ -492,12 +498,14 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     final userId = authService.getUserId();
 
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('로그인이 필요합니다'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('로그인이 필요합니다'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
       return;
     }
 
@@ -537,12 +545,14 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     final verses = await _getSelectedVerseReferences();
 
     if (verses.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('선택된 구절이 없습니다'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('선택된 구절이 없습니다'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
       return;
     }
 
@@ -620,12 +630,14 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     final userId = authService.getUserId();
 
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('로그인이 필요합니다'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('로그인이 필요합니다'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
       return;
     }
 
@@ -786,7 +798,9 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
             await meditationService.deleteMeditation(userId, meditation.id);
             await _loadMeditations();
 
-            Navigator.pop(dialogContext);
+            if (mounted) {
+              Navigator.pop(dialogContext);
+            }
 
             await Future.delayed(const Duration(milliseconds: 100));
 
@@ -1179,29 +1193,33 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     if (mode == null || !mounted) return;
 
     if (mode == 'daily') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const BibleReaderScreen(
-            bookShort: '창',
-            bookName: '창세기',
-            bookEng: 'Genesis',
-            initialChapter: 1,
-            autoShowDialog: true,
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const BibleReaderScreen(
+              bookShort: '창',
+              bookName: '창세기',
+              bookEng: 'Genesis',
+              initialChapter: 1,
+              autoShowDialog: true,
+            ),
           ),
-        ),
-      ).then((_) {
-        _loadMeditations();
-      });
+        ).then((_) {
+          _loadMeditations();
+        });
+      }
     } else if (mode == 'monthly') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const MonthlyReadingScreen(),
-        ),
-      ).then((_) {
-        _loadMeditations();
-      });
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const MonthlyReadingScreen(),
+          ),
+        ).then((_) {
+          _loadMeditations();
+        });
+      }
     }
   }
 
