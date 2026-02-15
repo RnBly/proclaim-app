@@ -124,8 +124,7 @@ class BibleService {
       return [];
     }
     
-    int dayOfMonth = date.day;
-    if (dayOfMonth > 30) dayOfMonth = 30;
+    int dayOfMonth = _calculateReadingDay(date);
     
     // 같은 날짜의 모든 reading 찾기
     final results = <BibleReading>[];
@@ -145,8 +144,7 @@ class BibleService {
       return [];
     }
     
-    int dayOfMonth = date.day;
-    if (dayOfMonth > 30) dayOfMonth = 30;
+    int dayOfMonth = _calculateReadingDay(date);
     
     // 같은 날짜의 모든 reading 찾기
     final results = <BibleReading>[];
@@ -158,6 +156,33 @@ class BibleService {
     }
     
     return results;
+  }
+
+  /// 1~3월 특별 로직: 30일 사이클을 유지하면서 31일이 있는 달의 본문도 읽을 수 있도록 함
+  /// 
+  /// 로직:
+  /// - 1월: 1~30일 = 1~30일차, 31일 = 1일차
+  /// - 2월: 1~28일 = 2~29일차  
+  /// - 3월: 1일 = 30일차, 2~31일 = 1~30일차
+  /// - 4월~12월: 기존대로 매월 1~30일 반복
+  int _calculateReadingDay(DateTime date) {
+    final month = date.month;
+    final day = date.day;
+    
+    // 1~3월 특별 처리
+    if (month == 1) {
+      // 1월: 1~30일 그대로, 31일은 1일차
+      return day <= 30 ? day : 1;
+    } else if (month == 2) {
+      // 2월: 1일 = 2일차, 2일 = 3일차, ..., 28일 = 29일차
+      return day + 1;
+    } else if (month == 3) {
+      // 3월: 1일 = 30일차, 2일 = 1일차, 3일 = 2일차, ..., 31일 = 30일차
+      return day == 1 ? 30 : day - 1;
+    }
+    
+    // 4월~12월: 기존 로직 (31일은 30일로 처리)
+    return day > 30 ? 30 : day;
   }
 
 
