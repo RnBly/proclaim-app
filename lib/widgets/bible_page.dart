@@ -33,6 +33,7 @@ class BiblePage extends StatefulWidget {
   final Function(String, int, int)? onMeditationView;
   final double titleFontSize;
   final double bodyFontSize;
+  final Function(double)? onScrollProgressChanged;
 
   const BiblePage({
     super.key,
@@ -45,6 +46,7 @@ class BiblePage extends StatefulWidget {
     this.onMeditationView,
     required this.titleFontSize,
     required this.bodyFontSize,
+    this.onScrollProgressChanged,
   });
 
   @override
@@ -72,9 +74,11 @@ class _BiblePageState extends State<BiblePage> {
     if (_scrollController.hasClients) {
       final maxScroll = _scrollController.position.maxScrollExtent;
       final currentScroll = _scrollController.position.pixels;
+      final progress = maxScroll > 0 ? currentScroll / maxScroll : 0.0;
       setState(() {
-        _scrollProgress = maxScroll > 0 ? currentScroll / maxScroll : 0.0;
+        _scrollProgress = progress;
       });
+      widget.onScrollProgressChanged?.call(progress);
     }
   }
 

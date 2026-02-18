@@ -39,7 +39,7 @@ class MonthlyReadingScreen extends StatefulWidget {
   State<MonthlyReadingScreen> createState() => _MonthlyReadingScreenState();
 }
 
-class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
+class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with TickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   DateTime _selectedDate = DateTime.now();
@@ -48,6 +48,15 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
   // 글씨 크기 상태
   double _titleFontSize = 24.0;
   double _bodyFontSize = 18.0;
+
+  // 읽기 진행률
+  double _scrollProgress = 0.0;
+  final Set<int> _triggeredMilestones = {};
+  bool _showMilestoneOverlay = false;
+  int _milestonePercent = 0;
+  AnimationController? _milestoneAnimController;
+  Animation<double>? _milestoneOpacity;
+  Animation<double>? _milestoneScale;
 
   final Map<String, Set<String>> _selectedVerses = {
     'monthly': {},
@@ -63,6 +72,53 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
     _loadSavedPreferences();
     _loadMonthlyReadingPlan();
     _loadMeditations();
+    _setupMilestoneAnimation();
+  }
+
+  void _setupMilestoneAnimation() {
+    _milestoneAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _milestoneOpacity = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.0), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 30),
+    ]).animate(_milestoneAnimController!);
+    _milestoneScale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.5, end: 1.1), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 1.1, end: 1.0), weight: 10),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.5), weight: 60),
+    ]).animate(_milestoneAnimController!);
+  }
+
+  void _onScrollProgressChanged(double progress) {
+    setState(() {
+      _scrollProgress = progress;
+    });
+    final percent = (progress * 100).round();
+    for (final milestone in [33, 66, 99]) {
+      if (percent >= milestone && !_triggeredMilestones.contains(milestone)) {
+        _triggeredMilestones.add(milestone);
+        _triggerMilestone(milestone);
+        break;
+      }
+    }
+  }
+
+  void _triggerMilestone(int percent) {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _showMilestoneOverlay = true;
+      _milestonePercent = percent;
+    });
+    _milestoneAnimController!.forward(from: 0).then((_) {
+      if (mounted) {
+        setState(() {
+          _showMilestoneOverlay = false;
+        });
+      }
+    });
   }
 
   Future<void> _loadSavedPreferences() async {
@@ -234,36 +290,76 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
           ],
         ),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // 페이지 인디케이터
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildPageIndicator(0, '시편'),
-                const SizedBox(width: 8),
-                _buildPageIndicator(1, '구·신약'),
-              ],
-            ),
+          Column(
+            children: [
+              // 페이지 인디케이터
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildPageIndicator(0, '시편'),
+                    const SizedBox(width: 8),
+                    _buildPageIndicator(1, '구·신약'),
+                  ],
+                ),
+              ),
+
+              // 프로그레스 바 (Nav 아래)
+              _buildProgressBar(),
+
+              // 페이지뷰
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentPage = index;
+                      _scrollProgress = 0.0;
+                      _triggeredMilestones.clear();
+                    });
+                  },
+                  children: [
+                    _buildMonthlyPsalmsPage(),
+                    _buildMonthlyReadingPage(),
+                  ],
+                ),
+              ),
+            ],
           ),
 
-          // 페이지뷰
-          Expanded(
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentPage = index;
-                });
+          // 마일스톤 오버레이
+          if (_showMilestoneOverlay && _milestoneOpacity != null && _milestoneScale != null)
+            AnimatedBuilder(
+              animation: _milestoneAnimController!,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: _milestoneOpacity!.value,
+                  child: Center(
+                    child: Transform.scale(
+                      scale: _milestoneScale!.value,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[700]!.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          '$_milestonePercent%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
               },
-              children: [
-                _buildMonthlyPsalmsPage(),
-                _buildMonthlyReadingPage(),
-              ],
             ),
-          ),
         ],
       ),
       floatingActionButton: _hasSelectedVerses()
@@ -1113,6 +1209,56 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
     );
   }
 
+  Widget _buildProgressBar() {
+    final percent = (_scrollProgress * 100).round();
+    return SizedBox(
+      height: 18,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final totalWidth = constraints.maxWidth;
+          final barWidth = (totalWidth * _scrollProgress.clamp(0.0, 1.0));
+
+          return Stack(
+            children: [
+              // 배경 트랙
+              Positioned.fill(
+                child: Container(
+                  color: Colors.blue.shade50,
+                ),
+              ),
+              // 진행 바
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: barWidth,
+                child: Container(
+                  color: Colors.blue[700],
+                ),
+              ),
+              // 퍼센트 텍스트 — 막대 끝에 붙어서 이동
+              Positioned(
+                left: (barWidth - 25).clamp(0.0, totalWidth - 28),
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: Text(
+                    '$percent%',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildPageIndicator(int pageIndex, String label) {
     final isActive = _currentPage == pageIndex;
     return GestureDetector(
@@ -1153,6 +1299,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
       onMeditationView: _viewMeditation,
       titleFontSize: _titleFontSize,
       bodyFontSize: _bodyFontSize,
+      onScrollProgressChanged: _onScrollProgressChanged,
     );
   }
 
@@ -1168,12 +1315,14 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> {
       onMeditationView: _viewMeditation,
       titleFontSize: _titleFontSize,
       bodyFontSize: _bodyFontSize,
+      onScrollProgressChanged: _onScrollProgressChanged,
     );
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _milestoneAnimController?.dispose();
     super.dispose();
   }
 }
