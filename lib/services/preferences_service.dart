@@ -215,4 +215,51 @@ class PreferencesService {
     await _prefs?.remove(_keyTranslation);
     print('🔄 모든 설정 초기화');
   }
+  // ========== 읽기 진행률 (날짜별) ==========
+
+  String _readingProgressKey(String userId, DateTime date, String sheetType) {
+    return 'reading_progress_${userId}_${date.year}_${date.month}_${date.day}_$sheetType';
+  }
+
+  String _readingCompletedKey(String userId, DateTime date) {
+    return 'reading_completed_${userId}_${date.year}_${date.month}_${date.day}';
+  }
+
+  Future<void> saveReadingProgress(String userId, DateTime date, String sheetType, double progress) async {
+    final key = _readingProgressKey(userId, date, sheetType);
+    await _prefs?.setDouble(key, progress);
+  }
+
+  double getReadingProgress(String userId, DateTime date, String sheetType) {
+    final key = _readingProgressKey(userId, date, sheetType);
+    return _prefs?.getDouble(key) ?? 0.0;
+  }
+
+  Future<void> saveReadingCompleted(String userId, DateTime date) async {
+    final key = _readingCompletedKey(userId, date);
+    await _prefs?.setBool(key, true);
+  }
+
+  bool isReadingCompleted(String userId, DateTime date) {
+    final key = _readingCompletedKey(userId, date);
+    return _prefs?.getBool(key) ?? false;
+  }
+
+  Map<int, int> getMonthlyProgress(String userId, int year, int month) {
+    final result = <int, int>{};
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    for (int day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(year, month, day);
+      if (isReadingCompleted(userId, date)) {
+        result[day] = 100;
+      } else {
+        final psalms = getReadingProgress(userId, date, 'monthly_psalms');
+        final main = getReadingProgress(userId, date, 'monthly');
+        final avg = ((psalms + main) / 2 * 100).round();
+        result[day] = avg;
+      }
+    }
+    return result;
+  }
+
 }

@@ -30,6 +30,7 @@ import '../widgets/settings_dialog.dart';
 import '../widgets/date_picker_dialog.dart' as custom;
 import '../widgets/meditation_action_buttons.dart';
 import '../widgets/highlight_options_dialog.dart';
+import '../widgets/reading_calendar_dialog.dart';
 import 'login_screen.dart';
 
 class MonthlyReadingScreen extends StatefulWidget {
@@ -51,7 +52,12 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
   // 읽기 진행률
   double _scrollProgress = 0.0;
+  double _psalmsProgress = 0.0;  // 시편 최대 진행률
+  double _mainProgress = 0.0;    // 구·신약 최대 진행률
   final Set<int> _triggeredMilestones = {};
+  // 완료 상태
+  bool _psalmsCompleted = false;
+  bool _isMainPageCompleted = false;
   bool _showMilestoneOverlay = false;
   int _milestonePercent = 0;
   AnimationController? _milestoneAnimController;
@@ -73,6 +79,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
     _loadMonthlyReadingPlan();
     _loadMeditations();
     _setupMilestoneAnimation();
+    _loadCompletedState();
   }
 
   void _setupMilestoneAnimation() {
@@ -93,10 +100,29 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
   }
 
   void _onScrollProgressChanged(double progress) {
+    final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
+    
+    // 최대값만 유지 (뒤로 스크롤해도 줄어들지 않음)
+    final maxProgress = _currentPage == 0
+        ? (progress > _psalmsProgress ? progress : _psalmsProgress)
+        : (progress > _mainProgress ? progress : _mainProgress);
+
     setState(() {
-      _scrollProgress = progress;
+      _scrollProgress = maxProgress;
+      if (_currentPage == 0) {
+        _psalmsProgress = maxProgress;
+      } else {
+        _mainProgress = maxProgress;
+      }
     });
-    final percent = (progress * 100).round();
+
+    // 실시간 진행률 저장 (달력 반영용)
+    final userId = AuthService().getUserId();
+    if (userId != null) {
+      PreferencesService().saveReadingProgress(userId, _selectedDate, sheetType, maxProgress);
+    }
+
+    final percent = (maxProgress * 100).round();
     for (final milestone in [33, 66, 99]) {
       if (percent >= milestone && !_triggeredMilestones.contains(milestone)) {
         _triggeredMilestones.add(milestone);
@@ -118,6 +144,147 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
           _showMilestoneOverlay = false;
         });
       }
+    });
+  }
+
+  // 완료 상태 로드
+  void _loadCompletionState() {
+    final userId = AuthService().getUserId();
+    if (userId == null) return;
+    setState(() {
+      _isMainPageCompleted = PreferencesService().isReadingCompleted(userId, _selectedDate);
+    });
+  }
+
+  // 날짜 완료 저장
+  Future<void> _markDateCompleted() async {
+    final userId = AuthService().getUserId();
+    if (userId == null) return;
+    await PreferencesService().saveReadingCompleted(userId, _selectedDate);
+    if (mounted) {
+      setState(() {
+        _isMainPageCompleted = true;
+      });
+    }
+  }
+
+  // 완료 버튼 눌렀을 때
+  Future<void> _onCompleteButtonPressed() async {
+    final userId = AuthService().getUserId();
+    if (userId == null) {
+      _showLoginPromptSimple();
+      return;
+    }
+
+    if (_currentPage == 0) {
+      // 시편: 완료 표시 후 구·신약 페이지로 이동
+      await PreferencesService().saveReadingProgress(userId, _selectedDate, 'monthly_psalms', 1.0);
+      setState(() {
+        _psalmsCompleted = true;
+        _psalmsProgress = 1.0;
+        _scrollProgress = 1.0;
+      });
+      if (mounted) {
+        _pageController.animateToPage(
+          1,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ 시편 읽기 완료! 구·신약으로 이동합니다.'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.blue,
+          ),
+        );
+      }
+    } else {
+      // 구·신약: 완료 처리 후 달력 바로 표시
+      await PreferencesService().saveReadingProgress(userId, _selectedDate, 'monthly', 1.0);
+      await _markDateCompleted();
+      setState(() {
+        _mainProgress = 1.0;
+        _scrollProgress = 1.0;
+      });
+      if (mounted) {
+        _showProgressCalendar();
+      }
+    }
+  }
+
+  // 달력 다이얼로그 표시
+  void _showProgressCalendar() {
+    final userId = AuthService().getUserId();
+    if (userId == null) {
+      _showLoginPromptSimple();
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (context) => ReadingCalendarDialog(
+        userId: userId,
+        currentDate: _selectedDate,
+        onDateSelected: (date) {
+          setState(() {
+            _selectedDate = date;
+            _selectedVerses['monthly']!.clear();
+            _selectedVerses['monthly_psalms']!.clear();
+            _scrollProgress = 0.0;
+            _triggeredMilestones.clear();
+          });
+          _loadCompletionState();
+          _loadCompletedState();
+        },
+      ),
+    );
+  }
+
+  // 간단한 로그인 유인 (달력/완료 버튼용)
+  void _showLoginPromptSimple() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('로그인 필요'),
+        content: const Text('읽기 진행 저장 및 달력 기능을 사용하려면\n로그인이 필요합니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('닫기', style: TextStyle(color: Colors.grey[600])),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue[700],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('로그인하기'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _loadCompletedState() {
+    final userId = AuthService().getUserId();
+    if (userId == null) return;
+    final prefs = PreferencesService();
+    setState(() {
+      _isMainPageCompleted = prefs.isReadingCompleted(userId, _selectedDate);
+      _psalmsCompleted = _isMainPageCompleted ||
+          prefs.getReadingProgress(userId, _selectedDate, 'monthly_psalms') >= 1.0;
+      // 저장된 진행률 복원
+      _psalmsProgress = prefs.getReadingProgress(userId, _selectedDate, 'monthly_psalms');
+      _mainProgress = prefs.getReadingProgress(userId, _selectedDate, 'monthly');
+      // 현재 페이지 진행률 표시
+      _scrollProgress = _currentPage == 0 ? _psalmsProgress : _mainProgress;
     });
   }
 
@@ -178,6 +345,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
             _selectedVerses['monthly']!.clear();
             _selectedVerses['monthly_psalms']!.clear();
           });
+          _loadCompletionState();
         },
       ),
     );
@@ -256,7 +424,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
   @override
   Widget build(BuildContext context) {
-    // 날짜 표시 (30일 초과시 30일로 제한)
+    final isLoggedIn = AuthService().getUserId() != null;
     int displayDay = _selectedDate.day > 30 ? 30 : _selectedDate.day;
     String dateStr = '${_selectedDate.month}월 $displayDay일';
 
@@ -283,9 +451,29 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
                 ),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.settings, color: Colors.black87),
-              onPressed: _showSettingsDialog,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 달력 아이콘
+                IconButton(
+                  icon: Icon(
+                    Icons.calendar_month,
+                    color: isLoggedIn ? Colors.black87 : Colors.grey[400],
+                  ),
+                  onPressed: () {
+                    if (isLoggedIn) {
+                      _showProgressCalendar();
+                    } else {
+                      _showLoginPromptSimple();
+                    }
+                  },
+                ),
+                // 설정 아이콘
+                IconButton(
+                  icon: const Icon(Icons.settings, color: Colors.black87),
+                  onPressed: _showSettingsDialog,
+                ),
+              ],
             ),
           ],
         ),
@@ -317,9 +505,11 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
                   onPageChanged: (index) {
                     setState(() {
                       _currentPage = index;
-                      _scrollProgress = 0.0;
+                      // 페이지 전환 시 해당 페이지의 저장된 진행률 표시
+                      _scrollProgress = index == 0 ? _psalmsProgress : _mainProgress;
                       _triggeredMilestones.clear();
                     });
+                    _loadCompletedState();
                   },
                   children: [
                     _buildMonthlyPsalmsPage(),
@@ -389,7 +579,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
       return;
     }
 
-    // 색상 선택만
     final color = await showDialog<String>(
       context: context,
       builder: (context) => const ColorSelectionDialog(),
@@ -397,7 +586,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
     if (color == null) return;
 
-    // 하이라이트 저장
     await _saveHighlight(verses, color);
   }
 
@@ -424,7 +612,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
       id: meditationService.generateId(),
       userId: userId,
       verses: verses,
-      content: '',  // 빈 문자열 = 하이라이트만
+      content: '',
       highlightColor: color,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
@@ -621,9 +809,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
   }
 
   Future<void> _showMeditationWritingDialog() async {
-    final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
-    
-    // 선택된 구절들을 VerseReference로 변환
     final verses = await _getSelectedVerseReferences();
 
     if (verses.isEmpty) {
@@ -638,7 +823,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
       return;
     }
 
-    // 1단계: 묵상 절 선택 다이얼로그
     final selectedVerses = await showDialog<List<VerseReference>>(
       context: context,
       builder: (context) => VerseSelectionDialog(
@@ -650,7 +834,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
     if (!mounted) return;
 
-    // 2단계: 묵상 기록 작성 다이얼로그
     final content = await showDialog<String>(
       context: context,
       builder: (dialogContext) => MeditationWritingDialog(
@@ -662,7 +845,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
     if (!mounted) return;
 
-    // 3단계: 색상 선택
     final color = await showDialog<String>(
       context: context,
       builder: (context) => const ColorSelectionDialog(),
@@ -670,11 +852,9 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
     if (color == null) return;
 
-    // 4단계: 묵상 저장
     await _saveMeditation(selectedVerses, content, color);
   }
 
-  // 선택된 구절들을 VerseReference로 변환
   Future<List<VerseReference>> _getSelectedVerseReferences() async {
     final List<VerseReference> verses = [];
     final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
@@ -735,8 +915,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
     );
 
     await meditationService.saveMeditation(meditation);
-
-    // 하이라이트 새로고침
     await _loadMeditations();
 
     if (mounted) {
@@ -747,7 +925,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
         ),
       );
       
-      // 선택 초기화
       setState(() {
         _selectedVerses[_currentPage == 0 ? 'monthly_psalms' : 'monthly']!.clear();
       });
@@ -772,11 +949,9 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
     if (!mounted) return;
 
-    // 첫 번째 항목이 하이라이트인지 묵상인지 확인
     final first = meditations.first;
     
     if (first.content.isEmpty) {
-      // 하이라이트 옵션 다이얼로그
       await showDialog(
         context: context,
         builder: (context) => HighlightOptionsDialog(
@@ -963,7 +1138,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
     );
   }
 
-  // 하이라이트 색상 변경
   Future<void> _changeHighlightColor(Meditation highlight) async {
     final color = await showDialog<String>(
       context: context,
@@ -977,11 +1151,8 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
     if (userId == null) return;
 
     final meditationService = MeditationService();
-    
-    // 기존 삭제
     await meditationService.deleteMeditation(userId, highlight.id);
     
-    // 새 색상으로 저장
     final updated = Meditation(
       id: meditationService.generateId(),
       userId: userId,
@@ -1005,9 +1176,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
     }
   }
 
-  // 하이라이트를 묵상으로 전환
   Future<void> _convertToMeditation(Meditation highlight) async {
-    // 묵상 작성 다이얼로그
     final content = await showDialog<String>(
       context: context,
       builder: (context) => MeditationWritingDialog(
@@ -1022,11 +1191,8 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
     if (userId == null) return;
 
     final meditationService = MeditationService();
-    
-    // 기존 하이라이트 삭제
     await meditationService.deleteMeditation(userId, highlight.id);
     
-    // 묵상으로 저장
     final meditation = Meditation(
       id: meditationService.generateId(),
       userId: userId,
@@ -1050,7 +1216,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
     }
   }
 
-  // 하이라이트 삭제
   Future<void> _deleteHighlight(Meditation highlight) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -1093,10 +1258,10 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
     }
   }
 
-  void _showLoginPrompt({required bool isHighlight}) {
-    final featureName = isHighlight ? '하이라이트' : '묵상';
-    final iconColor = isHighlight ? Colors.green : const Color(0xFFCE6E26);
-    final icon = isHighlight ? Icons.highlight : Icons.edit_note;
+  void _showLoginPrompt({required bool isHighlight, bool isCalendar = false}) {
+    final featureName = isCalendar ? '읽기 현황' : (isHighlight ? '하이라이트' : '묵상');
+    final iconColor = isCalendar ? Colors.blue : (isHighlight ? Colors.green : const Color(0xFFCE6E26));
+    final icon = isCalendar ? Icons.calendar_month : (isHighlight ? Icons.highlight : Icons.edit_note);
 
     showDialog(
       context: context,
@@ -1111,7 +1276,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // X 버튼
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -1124,7 +1288,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
                 ],
               ),
               const SizedBox(height: 8),
-              // 아이콘
               Container(
                 width: 64,
                 height: 64,
@@ -1139,7 +1302,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
                 ),
               ),
               const SizedBox(height: 20),
-              // 제목
               Text(
                 '$featureName 기능',
                 style: const TextStyle(
@@ -1149,7 +1311,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
                 ),
               ),
               const SizedBox(height: 12),
-              // 설명
               Text(
                 '$featureName 기능을 사용하려면\n로그인이 필요합니다',
                 textAlign: TextAlign.center,
@@ -1160,7 +1321,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
                 ),
               ),
               const SizedBox(height: 24),
-              // 로그인 버튼
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -1190,7 +1350,6 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
                 ),
               ),
               const SizedBox(height: 8),
-              // 닫기 버튼
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 style: TextButton.styleFrom(
@@ -1220,31 +1379,25 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
 
           return Stack(
             children: [
-              // 배경 트랙
               Positioned.fill(
-                child: Container(
-                  color: Colors.blue.shade50,
-                ),
+                child: Container(color: Colors.blue.shade50),
               ),
-              // 진행 바
               Positioned(
                 left: 0,
                 top: 0,
                 bottom: 0,
                 width: barWidth,
-                child: Container(
-                  color: Colors.blue[700],
-                ),
+                child: Container(color: Colors.blue[700]),
               ),
-              // 퍼센트 텍스트 — 막대 끝에 붙어서 이동
               Positioned(
-                left: (barWidth - 25).clamp(0.0, totalWidth - 28),
+                left: (barWidth - 25).clamp(0.0, totalWidth - 30),
+                width: 30,
                 top: 0,
                 bottom: 0,
                 child: Center(
                   child: Text(
                     '$percent%',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -1288,6 +1441,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
   }
 
   Widget _buildMonthlyReadingPage() {
+    final isLoggedIn = AuthService().getUserId() != null;
     return BiblePage(
       key: ValueKey('monthly_${_selectedDate.month}_${_selectedDate.day}'),
       sheetType: 'monthly',
@@ -1300,10 +1454,16 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
       titleFontSize: _titleFontSize,
       bodyFontSize: _bodyFontSize,
       onScrollProgressChanged: _onScrollProgressChanged,
+      isCompleted: _isMainPageCompleted,
+      isLoggedIn: isLoggedIn,
+      onCompletePressed: _onCompleteButtonPressed,
+      onLoginPrompt: _showLoginPromptSimple,
+      initialProgress: _mainProgress,
     );
   }
 
   Widget _buildMonthlyPsalmsPage() {
+    final isLoggedIn = AuthService().getUserId() != null;
     return BiblePage(
       key: ValueKey('monthly_psalms_${_selectedDate.month}_${_selectedDate.day}'),
       sheetType: 'monthly_psalms',
@@ -1316,6 +1476,11 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
       titleFontSize: _titleFontSize,
       bodyFontSize: _bodyFontSize,
       onScrollProgressChanged: _onScrollProgressChanged,
+      isCompleted: _psalmsCompleted,
+      isLoggedIn: isLoggedIn,
+      onCompletePressed: _onCompleteButtonPressed,
+      onLoginPrompt: _showLoginPromptSimple,
+      initialProgress: _psalmsProgress,
     );
   }
 

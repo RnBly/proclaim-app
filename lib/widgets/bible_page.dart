@@ -34,6 +34,11 @@ class BiblePage extends StatefulWidget {
   final double titleFontSize;
   final double bodyFontSize;
   final Function(double)? onScrollProgressChanged;
+  final bool isLoggedIn;
+  final bool isCompleted;
+  final VoidCallback? onCompletePressed;
+  final VoidCallback? onLoginPrompt;
+  final double initialProgress;
 
   const BiblePage({
     super.key,
@@ -47,6 +52,11 @@ class BiblePage extends StatefulWidget {
     required this.titleFontSize,
     required this.bodyFontSize,
     this.onScrollProgressChanged,
+    this.isLoggedIn = false,
+    this.isCompleted = false,
+    this.onCompletePressed,
+    this.onLoginPrompt,
+    this.initialProgress = 0.0,
   });
 
   @override
@@ -61,6 +71,19 @@ class _BiblePageState extends State<BiblePage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_updateScrollProgress);
+    // 마지막 읽은 위치로 이동
+    if (widget.initialProgress > 0.01) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted && _scrollController.hasClients) {
+            final maxScroll = _scrollController.position.maxScrollExtent;
+            if (maxScroll > 0) {
+              _scrollController.jumpTo(maxScroll * widget.initialProgress);
+            }
+          }
+        });
+      });
+    }
   }
 
   @override
@@ -158,6 +181,101 @@ class _BiblePageState extends State<BiblePage> {
     );
   }
 
+
+  Widget _buildCompletionButton() {
+    final isPsalms = widget.sheetType == 'monthly_psalms';
+    final label = isPsalms ? '시편 읽기 완료 →' : '구·신약 읽기 완료';
+
+    if (!widget.isLoggedIn) {
+      // 비로그인: 비활성화된 버튼, 탭하면 로그인 유인
+      return GestureDetector(
+        onTap: widget.onLoginPrompt,
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(20, 30, 20, 40),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.lock_outline, size: 16, color: Colors.grey.shade400),
+              const SizedBox(width: 8),
+              Text(
+                '$label (로그인 필요)',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey.shade400,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (widget.isCompleted) {
+      // 완료 상태: 비활성화
+      return Container(
+        margin: const EdgeInsets.fromLTRB(20, 30, 20, 40),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.blue.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.blue.shade200),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle, size: 18, color: Colors.blue.shade300),
+            const SizedBox(width: 8),
+            Text(
+              '읽기 완료!',
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.blue.shade300,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 로그인 + 미완료: 활성화 버튼
+    return GestureDetector(
+      onTap: widget.onCompletePressed,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(20, 30, 20, 40),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.blue.shade700,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.check, size: 18, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 15,
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildKoreanView(List<BibleReading> readings) {
     return ListView(
       controller: _scrollController,
@@ -197,6 +315,9 @@ class _BiblePageState extends State<BiblePage> {
               ),
             ),
         ],
+
+        // 완료 버튼
+        _buildCompletionButton(),
       ],
     );
   }
@@ -346,6 +467,9 @@ class _BiblePageState extends State<BiblePage> {
               ),
             ),
         ],
+
+        // 완료 버튼
+        _buildCompletionButton(),
       ],
     );
   }
@@ -519,6 +643,9 @@ class _BiblePageState extends State<BiblePage> {
               ),
             ),
         ],
+
+        // 완료 버튼
+        _buildCompletionButton(),
       ],
     );
   }
