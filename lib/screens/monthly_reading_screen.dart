@@ -218,6 +218,35 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
     }
   }
 
+  // 특정 년/월로 달력 표시 (31일 선택 시 사용)
+  void _showProgressCalendarForMonth(int year, int month) {
+    final userId = AuthService().getUserId();
+    if (userId == null) {
+      _showLoginPromptSimple();
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (context) => ReadingCalendarDialog(
+        userId: userId,
+        currentDate: DateTime(year, month, 1),
+        onDateSelected: (date) {
+          if (!mounted) return;
+          setState(() {
+            _selectedDate = date;
+            _selectedVerses['monthly']!.clear();
+            _selectedVerses['monthly_psalms']!.clear();
+            _scrollProgress = 0.0;
+            _psalmsMilestones.clear();
+            _mainMilestones.clear();
+          });
+          _loadCompletionState();
+          _loadCompletedState();
+        },
+      ),
+    );
+  }
+
   // 달력 다이얼로그 표시
   void _showProgressCalendar() {
     final userId = AuthService().getUserId();
@@ -231,6 +260,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
         userId: userId,
         currentDate: _selectedDate,
         onDateSelected: (date) {
+          if (!mounted) return;
           setState(() {
             _selectedDate = date;
             _selectedVerses['monthly']!.clear();
@@ -347,12 +377,24 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
       builder: (context) => custom.DatePickerDialog(
         initialDate: _selectedDate,
         onDateSelected: (date) {
+          // 31일 선택 시 → 달력 표시 (읽기 계획 없음)
+          if (date.day == 31 && date.month != 1 && date.month != 3) {
+            _showProgressCalendarForMonth(date.year, date.month);
+            return;
+          }
+          if (!mounted) return;
           setState(() {
             _selectedDate = date;
             _selectedVerses['monthly']!.clear();
             _selectedVerses['monthly_psalms']!.clear();
+            _scrollProgress = 0.0;
+            _psalmsProgress = 0.0;
+            _mainProgress = 0.0;
+            _psalmsMilestones.clear();
+            _mainMilestones.clear();
           });
           _loadCompletionState();
+          _loadCompletedState();
         },
       ),
     );

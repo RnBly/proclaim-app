@@ -39,8 +39,8 @@ class _ReadingCalendarDialogState extends State<ReadingCalendarDialog> {
     _viewYear = widget.currentDate.year;
     _viewMonth = widget.currentDate.month;
     _loadProgress();
-    // 3초마다 진행률 갱신 (실시간 반영)
-    _refreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    // 1초마다 진행률 갱신 (실시간 반영)
+    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) _loadProgress();
     });
   }
@@ -144,8 +144,8 @@ class _ReadingCalendarDialogState extends State<ReadingCalendarDialog> {
 
                 return GestureDetector(
                   onTap: () {
-                    widget.onDateSelected(date);
                     Navigator.pop(context);
+                    widget.onDateSelected(date);
                   },
                   child: Container(
                     decoration: BoxDecoration(

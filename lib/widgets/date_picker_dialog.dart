@@ -15,11 +15,13 @@ import 'package:flutter/material.dart';
 class DatePickerDialog extends StatefulWidget {
   final DateTime initialDate;
   final Function(DateTime) onDateSelected;
+  final Function(int year, int month)? onShow31Calendar;
 
   const DatePickerDialog({
     super.key,
     required this.initialDate,
     required this.onDateSelected,
+    this.onShow31Calendar,
   });
 
   @override
@@ -31,28 +33,49 @@ class _DatePickerDialogState extends State<DatePickerDialog> {
   late DateTime _selectedDate;
   final DateTime _today = DateTime.now();
 
-  // 1년치 날짜 생성 (오늘 기준 -180일 ~ +180일)
   late List<DateTime> _dates;
+
+  // 달력 보기용 31일 여부 - 1월, 3월만 정상 선택, 나머지는 달력 보기
+  bool _is31st(DateTime date) {
+    if (date.day != 31) return false;
+    if (date.month == 1 || date.month == 3) return false;
+    return true;
+  }
 
   @override
   void initState() {
     super.initState();
     _selectedDate = widget.initialDate;
 
-    // 날짜 리스트 생성
-    _dates = List.generate(365, (index) {
-      return _today.subtract(Duration(days: 180 - index));
-    });
+    // 날짜 리스트 생성 (31일 포함)
+    _dates = _generateDates();
 
-    // 초기 선택 날짜의 인덱스 찾기
     final initialIndex = _dates.indexWhere((date) =>
-    date.year == _selectedDate.year &&
+        date.year == _selectedDate.year &&
         date.month == _selectedDate.month &&
         date.day == _selectedDate.day);
 
     _scrollController = FixedExtentScrollController(
-      initialItem: initialIndex >= 0 ? initialIndex : 180,
+      initialItem: initialIndex >= 0 ? initialIndex : (_dates.length ~/ 2),
     );
+  }
+
+  List<DateTime> _generateDates() {
+    final List<DateTime> result = [];
+    final start = _today.subtract(const Duration(days: 180));
+    final end = _today.add(const Duration(days: 185));
+
+    DateTime current = DateTime(start.year, start.month, start.day);
+    while (!current.isAfter(end)) {
+      result.add(current);
+      // 30일 달에서 31일 삽입 (4월 이후만: 4, 6, 9, 11월)
+      final daysInMonth = DateTime(current.year, current.month + 1, 0).day;
+      if (current.day == 30 && daysInMonth == 30 && current.month >= 4) {
+        result.add(DateTime(current.year, current.month, 31));
+      }
+      current = current.add(const Duration(days: 1));
+    }
+    return result;
   }
 
   @override
@@ -62,10 +85,12 @@ class _DatePickerDialogState extends State<DatePickerDialog> {
   }
 
   String _formatDate(DateTime date) {
+    if (_is31st(date)) {
+      return '${date.month}월 31일 (달력 보기)';
+    }
     final isToday = date.year == _today.year &&
         date.month == _today.month &&
         date.day == _today.day;
-
     if (isToday) {
       return '${date.month}월 ${date.day}일 (Today)';
     }
@@ -85,7 +110,8 @@ class _DatePickerDialogState extends State<DatePickerDialog> {
     }
   }
 
-  Color _getTextColor(int offset) {
+  Color _getTextColor(int offset, {bool is31st = false}) {
+    if (is31st) return Colors.grey.shade400;
     switch (offset.abs()) {
       case 0:
         return Colors.black;
@@ -155,9 +181,12 @@ class _DatePickerDialogState extends State<DatePickerDialog> {
                     diameterRatio: 1.5,
                     physics: const FixedExtentScrollPhysics(),
                     onSelectedItemChanged: (index) {
-                      setState(() {
-                        _selectedDate = _dates[index];
-                      });
+                      final date = _dates[index];
+                      if (!_is31st(date)) {
+                        setState(() {
+                          _selectedDate = date;
+                        });
+                      }
                     },
                     childDelegate: ListWheelChildBuilderDelegate(
                       childCount: _dates.length,
@@ -169,11 +198,15 @@ class _DatePickerDialogState extends State<DatePickerDialog> {
                         return GestureDetector(
                           onTap: () {
                             if (offset == 0) {
-                              // 가운데 날짜 클릭 시 선택하고 닫기
-                              widget.onDateSelected(_selectedDate);
-                              Navigator.pop(context);
+                              if (_is31st(date)) {
+                                // 31일: 달력 표시
+                                widget.onDateSelected(date);
+                                Navigator.pop(context);
+                              } else {
+                                widget.onDateSelected(_selectedDate);
+                                Navigator.pop(context);
+                              }
                             } else {
-                              // 다른 날짜 클릭 시 해당 날짜로 스크롤
                               _scrollController.animateToItem(
                                 index,
                                 duration: const Duration(milliseconds: 300),
@@ -186,10 +219,11 @@ class _DatePickerDialogState extends State<DatePickerDialog> {
                               _formatDate(date),
                               style: TextStyle(
                                 fontSize: _getTextSize(offset),
-                                color: _getTextColor(offset),
-                                fontWeight: offset == 0
+                                color: _getTextColor(offset, is31st: _is31st(date)),
+                                fontWeight: offset == 0 && !_is31st(date)
                                     ? FontWeight.bold
                                     : FontWeight.normal,
+                                fontStyle: _is31st(date) ? FontStyle.italic : FontStyle.normal,
                               ),
                             ),
                           ),
@@ -212,7 +246,7 @@ class _DatePickerDialogState extends State<DatePickerDialog> {
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: _is31st(_selectedDate) ? Colors.grey : Colors.blue,
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
