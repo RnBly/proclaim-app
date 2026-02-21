@@ -33,7 +33,7 @@ class BiblePage extends StatefulWidget {
   final Function(String, int, int)? onMeditationView;
   final double titleFontSize;
   final double bodyFontSize;
-  final Function(double)? onScrollProgressChanged;
+  final Function(double, String)? onScrollProgressChanged;
   final bool isLoggedIn;
   final bool isCompleted;
   final VoidCallback? onCompletePressed;
@@ -66,6 +66,7 @@ class BiblePage extends StatefulWidget {
 class _BiblePageState extends State<BiblePage> {
   final ScrollController _scrollController = ScrollController();
   double _scrollProgress = 0.0;
+  bool _suppressScrollCallback = false;
 
   @override
   void initState() {
@@ -78,7 +79,12 @@ class _BiblePageState extends State<BiblePage> {
           if (mounted && _scrollController.hasClients) {
             final maxScroll = _scrollController.position.maxScrollExtent;
             if (maxScroll > 0) {
+              _suppressScrollCallback = true;
               _scrollController.jumpTo(maxScroll * widget.initialProgress);
+              // 한 프레임 후 억제 해제
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _suppressScrollCallback = false;
+              });
             }
           }
         });
@@ -94,14 +100,15 @@ class _BiblePageState extends State<BiblePage> {
   }
 
   void _updateScrollProgress() {
+    if (_suppressScrollCallback) return;
     if (_scrollController.hasClients) {
       final maxScroll = _scrollController.position.maxScrollExtent;
       final currentScroll = _scrollController.position.pixels;
-      final progress = maxScroll > 0 ? currentScroll / maxScroll : 0.0;
+      final progress = maxScroll > 0 ? (currentScroll / maxScroll).clamp(0.0, 1.0) : 0.0;
       setState(() {
         _scrollProgress = progress;
       });
-      widget.onScrollProgressChanged?.call(progress);
+      widget.onScrollProgressChanged?.call(progress, widget.sheetType);
     }
   }
 
@@ -183,6 +190,10 @@ class _BiblePageState extends State<BiblePage> {
 
 
   Widget _buildCompletionButton() {
+    // 한달 통독 페이지에서만 표시
+    final isMonthly = widget.sheetType == 'monthly' || widget.sheetType == 'monthly_psalms';
+    if (!isMonthly) return const SizedBox.shrink();
+
     final isPsalms = widget.sheetType == 'monthly_psalms';
     final label = isPsalms ? '시편 읽기 완료 →' : '구·신약 읽기 완료';
 

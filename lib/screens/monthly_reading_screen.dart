@@ -54,7 +54,8 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
   double _scrollProgress = 0.0;
   double _psalmsProgress = 0.0;  // 시편 최대 진행률
   double _mainProgress = 0.0;    // 구·신약 최대 진행률
-  final Set<int> _triggeredMilestones = {};
+  final Set<int> _psalmsMilestones = {};
+  final Set<int> _mainMilestones = {};
   // 완료 상태
   bool _psalmsCompleted = false;
   bool _isMainPageCompleted = false;
@@ -99,17 +100,18 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
     ]).animate(_milestoneAnimController!);
   }
 
-  void _onScrollProgressChanged(double progress) {
-    final sheetType = _currentPage == 0 ? 'monthly_psalms' : 'monthly';
-    
+  void _onScrollProgressChanged(double progress, String sheetType) {
+    // sheetType으로 페이지 구분 (PageView 스와이프 중 _currentPage 오작동 방지)
+    final isPsalms = sheetType == 'monthly_psalms';
+
     // 최대값만 유지 (뒤로 스크롤해도 줄어들지 않음)
-    final maxProgress = _currentPage == 0
+    final maxProgress = isPsalms
         ? (progress > _psalmsProgress ? progress : _psalmsProgress)
         : (progress > _mainProgress ? progress : _mainProgress);
 
     setState(() {
       _scrollProgress = maxProgress;
-      if (_currentPage == 0) {
+      if (isPsalms) {
         _psalmsProgress = maxProgress;
       } else {
         _mainProgress = maxProgress;
@@ -122,10 +124,14 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
       PreferencesService().saveReadingProgress(userId, _selectedDate, sheetType, maxProgress);
     }
 
+    // 마일스톤은 현재 보고 있는 페이지에서만 트리거
+    if ((_currentPage == 0) != isPsalms) return;
+
     final percent = (maxProgress * 100).round();
-    for (final milestone in [33, 66, 99]) {
-      if (percent >= milestone && !_triggeredMilestones.contains(milestone)) {
-        _triggeredMilestones.add(milestone);
+    final milestones = isPsalms ? _psalmsMilestones : _mainMilestones;
+    for (final milestone in [33, 66, 100]) {
+      if (percent >= milestone && !milestones.contains(milestone)) {
+        milestones.add(milestone);
         _triggerMilestone(milestone);
         break;
       }
@@ -230,7 +236,8 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
             _selectedVerses['monthly']!.clear();
             _selectedVerses['monthly_psalms']!.clear();
             _scrollProgress = 0.0;
-            _triggeredMilestones.clear();
+            _psalmsMilestones.clear();
+            _mainMilestones.clear();
           });
           _loadCompletionState();
           _loadCompletedState();
@@ -507,7 +514,8 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
                       _currentPage = index;
                       // 페이지 전환 시 해당 페이지의 저장된 진행률 표시
                       _scrollProgress = index == 0 ? _psalmsProgress : _mainProgress;
-                      _triggeredMilestones.clear();
+                      _psalmsMilestones.clear();
+            _mainMilestones.clear();
                     });
                     _loadCompletedState();
                   },
@@ -1371,7 +1379,7 @@ class _MonthlyReadingScreenState extends State<MonthlyReadingScreen> with Ticker
   Widget _buildProgressBar() {
     final percent = (_scrollProgress * 100).round();
     return SizedBox(
-      height: 18,
+      height: 13,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final totalWidth = constraints.maxWidth;
